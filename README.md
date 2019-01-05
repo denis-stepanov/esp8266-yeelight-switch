@@ -30,6 +30,8 @@ Usage:
  * 2 blinks - button not linked to a bulb;
  * 1 long blink - Wi-Fi disconnected.
  
+ The LED is constantly lit during Wi-Fi reconfiguration process.
+ 
  Prerequsites:
  1. Hardware:
     1. ESP8266 (tested with ESP-12E Witty Cloud);
