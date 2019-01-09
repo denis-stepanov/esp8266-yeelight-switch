@@ -293,7 +293,7 @@ void handleConf() {
   page += "<p><input type=\"submit\" value=\"Link\"></p></form></body></html>";
   server.sendContent(page);
   server.sendContent("");
-  server.client().stop();   // Terminate chinked transfer
+  server.client().stop();   // Terminate chunked transfer
 }
 
 // Configuration saving page
