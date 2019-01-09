@@ -301,6 +301,7 @@ void handleConf() {
 void handleSave() {
   String bulbid = server.arg("bulb");
   bool bulb_exists = false;
+  EEPROM.begin(USED_EEPROM_SIZE);
   if (bulbid != "") {
     for (unsigned short i = 0; i < nbulbs; i++)
       if (bulbid == bulbs[i]->GetID()) {
@@ -317,19 +318,21 @@ void handleSave() {
       // TODO: check for errors?
       char bulbid_c[YL_ID_LENGTH + 1] = {0,};
       strncpy(bulbid_c, bulbid.c_str(), sizeof(bulbid_c) - 1);
-      EEPROM.begin(USED_EEPROM_SIZE);
       EEPROM.write(0, 'Y');
       EEPROM.write(1, 'B');
       EEPROM.put(2, bulbid_c);
-      EEPROM.commit();
-      EEPROM.end();
       Serial.println("Saved new bulb configuration in EEPROM");
     } else
       Serial.println("Error saving new bulb configuration: the bulb does not exist");
   } else {
     currbulb = NULL;
+
+    // Overwriting the EEPROM marker will effectively cause forgetting the settings
+    EEPROM.write(0, 0);
     Serial.println("Bulb unlinked from the switch");
   }
+  EEPROM.commit();
+  EEPROM.end();
 
   String page = "<html><head><title>";
   page += HOSTNAME;
