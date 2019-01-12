@@ -4,6 +4,7 @@ Arduino project for controlling an Yeelight bulb using an ESP8266 MCU and a push
 Program features:
 * Use of local API, meaning nearly instantaneous light switching;
 * Support for Yeelight devices discovery on the network;
+* Support for multiple bulbs switching;
 * Visible user feedback using the ESP8266's built-in LED;
 * Support for Wi-Fi network reconfiguration;
 * Web interface with mDNS support to configure the switch;
@@ -13,20 +14,19 @@ Program features:
 * Detailed diagnostics sent over serial interface.
 
 Current known limitations:
-* Only one bulb at a time is supported;
 * The bulb has to be online when the switch boots, otherwise the switch will start unlinked;
-* No power-saving optimisations have been made; the switch will not last long on a battery source.
+* The switch is not intended to operate on battery; see issue #3 for more details.
 
 Usage:
  1. review the configuration settings at the top of the program; compile and flash your ESP8266;
- 1. boot with the push button pressed, connect your computer to the Wi-Fi network "ybutton1", password "Yeelight", go to the captive portal, enter and save your Wi-Fi network credentials;
- 1. in your Wi-Fi network, go to http://ybutton1.local, run the Yeelight scan and link the switch to the bulb found;
- 1. use the push button to control your bulb manually;
- 1. access to http://ybutton1.local/flip to toggle the bulb from a script.
+ 2. boot with the push button pressed, connect your computer to the Wi-Fi network "ybutton1", password "Yeelight", go to the captive portal, enter and save your Wi-Fi network credentials;
+ 3. in your Wi-Fi network, go to http://ybutton1.local, run the Yeelight scan and link the switch to the bulb found;
+ 4. use the push button to control your bulb manually;
+ 5. access to http://ybutton1.local/flip to toggle the bulb from a script.
  
  LED response to the button:
  * 1 blink  - bulb flip OK;
- * 1 + 2 blinks - the bulb did not respond;
+ * 1 + 2 blinks - one of the bulbs did not respond;
  * 2 blinks - button not linked to a bulb;
  * 1 long blink - Wi-Fi disconnected.
  
