@@ -96,9 +96,11 @@ ESP8266WebServer server(80);        // Switch configuration web server
 char discovery_reply[MAX_DISCOVERY_REPLY_SIZE]; // Buffer to hold one discovery reply 
 
 #define MAX_BULBS 24                // Max number of bulbs which can be handled by the discovery process
+#define MAX_ACTIVE_BULBS 8          // Max number of active bulbs
 YBulb *bulbs[MAX_BULBS] = {NULL,};  // List of all known bulbs
-unsigned short nbulbs = 0;          // Size of the list (<= MAX_BULBS)
-YBulb *currbulb = NULL;             // Pointer to the bulb in use
+unsigned char nbulbs = 0;           // Size of the list (<= MAX_BULBS)
+YBulb *abulbs[MAX_ACTIVE_BULBS] = {NULL,}; // Pointers to the bulbs in use
+unsigned char nabulbs = 0;          // Size of the list (<= MAX_ACTIVE_BULBS)
 
 // Yeelight discovery. Note - no bulb removal at the moment
 #define DISCOVERY_TIMEOUT 3000      // (ms)
@@ -147,7 +149,7 @@ void yl_discover(void) {
 
             // Check if we already have this bulb in the list
             bool bulb_exists = false;
-            for (unsigned short i = 0; i < nbulbs; i++)
+            for (unsigned char i = 0; i < nbulbs; i++)
               if (!strcmp(token, bulbs[i]->GetID())) {
                 bulb_exists = true;
                 bulb = bulbs[i];
@@ -189,25 +191,28 @@ void yl_discover(void) {
     }
     yield();  // The loop is lengthy; allow for background processing
   }
-  Serial.printf("Total bulbs discovered: %hu\n", nbulbs);
+  Serial.printf("Total bulbs discovered: %d\n", nbulbs);
 }
 
 // Yeelight bulb flip
 int yl_flip(void) {
-  if (currbulb) {
-    if (client.connect(currbulb->GetIP(), currbulb->GetPort())) {
-      client.print(YL_MSG_TOGGLE);
-      client.stop();
-      Serial.println("Bulb toggle sent");
-    } else {
-      Serial.printf("Bulb connection to %s failed\n", currbulb->GetIP());
-      return -2;
-    }
+  int ret = 0;
+  if (nabulbs) {
+    for (unsigned char i = 0; i < nabulbs; i++)
+      if (client.connect(abulbs[i]->GetIP(), abulbs[i]->GetPort())) {
+        client.print(YL_MSG_TOGGLE);
+        client.stop();
+        Serial.printf("Bulb %d toggle sent\n", i + 1);
+      } else {
+        Serial.printf("Bulb connection to %s failed\n", abulbs[i]->GetIP());
+        ret = -2;
+        yield();
+      }
   } else {
-    Serial.println("No linked bulb found");
-    return -1;
+    Serial.println("No linked bulbs found");
+    ret = -1;
   }
-  return 0;
+  return ret;
 }
 
 // Web server configuration pages
@@ -216,20 +221,27 @@ void handleRoot() {
   String page = "<html><head><title>";
   page += HOSTNAME;
   page += "</title></head><body><h3>Yeelight Button</h3>";
-  if (currbulb) {
-    page += "<p>Linked to the bulb id(";
-    page += currbulb->GetID();
-    page += "), ip(";
-    page += currbulb->GetIP();
-    page += "), name(";
-    page += currbulb->GetName();
-    page += "), model(";
-    page += currbulb->GetModel();
-    page += ")</p>";
+  if (nabulbs) {
+    page += "<p>Linked to the bulb";
+    if (nabulbs > 1)
+      page += "s";
+    page += ":</p><p><ul>";
+    for (unsigned char i = 0; i < nabulbs; i++) {
+      page += "<li>id(";
+      page += abulbs[i]->GetID();
+      page += "), ip(";
+      page += abulbs[i]->GetIP();
+      page += "), name(";
+      page += abulbs[i]->GetName();
+      page += "), model(";
+      page += abulbs[i]->GetModel();
+      page += ")</li>";
+    }
+    page += "</ul></p>";
   } else
     page += "<p>Not linked to a bulb</p>";
   page += "<p>[<a href=\"conf\">Change</a>]";
-  if (currbulb)
+  if (nabulbs)
     page += " [<a href=\"flip\">Flip</a>]";
   page += "</p><hr/><p><i>Connected to network ";
   page += WiFi.SSID();
@@ -262,7 +274,7 @@ void handleConf() {
   page += "<p><i>Scanning ";
   page += WiFi.SSID();
   page += " for Yeelight devices...</i></p>";
-  page += "<p><i>Hint: turn all bulbs off, except the desired one, in order to identify it easily.</i></p>";
+  page += "<p><i>Hint: turn all bulbs off, except the desired ones, in order to identify them easily.</i></p>";
 
   // Use chunked transfer to show scan in progress. Works in Chrome, not so well in Firefox
   server.setContentLength(CONTENT_LENGTH_UNKNOWN); 
@@ -270,15 +282,21 @@ void handleConf() {
   yl_discover();
   page = "<p>Found ";
   page += nbulbs;
-  page += " bulb(s). Select a bulb from the list below.</p>";
-  page += "<form action=\"/save\">";
-  for (int i = 0; i < nbulbs; i++) {
-    page += "<p><input type=\"radio\" name=\"bulb\" value=\"";
-    page += bulbs[i]->GetID();
+  page += " bulb";
+  if (nbulbs != 1)
+    page += "s";
+  page +=". Select bulbs from the list below (";
+  page += MAX_ACTIVE_BULBS;
+  page += " max).</p>";
+  page += "<form action=\"/save\"><p style=\"font-family: monospace;\">";
+  for (unsigned char i = 0; i < nbulbs; i++) {
+    page += "<input type=\"checkbox\" name=\"bulb\" value=\"";
+    page += i;
     page += "\"";
-    if (currbulb && !strcmp(currbulb->GetID(), bulbs[i]->GetID()))
-      page += " checked";
-    page += ">";
+    for (unsigned char j = 0; j < nabulbs; j++)
+      if (abulbs[j] == bulbs[i])
+        page += " checked";
+    page += "/> ";
     page += bulbs[i]->GetIP();
     page += " id(";
     page += bulbs[i]->GetID();
@@ -288,64 +306,88 @@ void handleConf() {
     page += bulbs[i]->GetModel();
     page += ") power(";
     page += bulbs[i]->GetPower() ? "<b>on</b>" : "off";
-    page += ")</p>";
+    page += ")<br/>";
   }
-  page += "<p><input type=\"submit\" value=\"Link\"></p></form></body></html>";
+  page += "</p><p><input type=\"submit\" value=\"Link\"/></p></form></body></html>";
   server.sendContent(page);
   server.sendContent("");
   server.client().stop();   // Terminate chunked transfer
 }
 
 // Configuration saving page
-#define USED_EEPROM_SIZE 32
+// EEPROM format:
+//   0-1: 'YB' - Yeelight Bulb configuration marker
+//     2: format version. Increment each time the format changes
+//     3: number of stored bulbs
+//  4-22: <selected bulb ID> (19 bytes, null-terminated)
+//      : ...
+#define USED_EEPROM_SIZE (2 + 1 + 1 + (YL_ID_LENGTH + 1) * MAX_ACTIVE_BULBS)
+#define EEPROM_FORMAT_VERSION 49    // The first version of the format stored 1 bulb id right after the marker. ID stars with ASCII '0' == 48
 void handleSave() {
-  String bulbid = server.arg("bulb");
-  bool bulb_exists = false;
-  EEPROM.begin(USED_EEPROM_SIZE);
-  if (bulbid != "") {
-    for (unsigned short i = 0; i < nbulbs; i++)
-      if (bulbid == bulbs[i]->GetID()) {
-        bulb_exists = true;
-        currbulb = bulbs[i];
-        break;
-    }
-    if (bulb_exists) {
 
-      // Save to EEPROM. Format:
-      //   0-1: 'YB' - Yeelight Bulb configuration marker
-      //  2-20: <selected bulb ID> (null-terminated)
-      // 21-31: <reserved>
-      // TODO: check for errors?
-      char bulbid_c[YL_ID_LENGTH + 1] = {0,};
-      strncpy(bulbid_c, bulbid.c_str(), sizeof(bulbid_c) - 1);
-      EEPROM.write(0, 'Y');
-      EEPROM.write(1, 'B');
-      EEPROM.put(2, bulbid_c);
-      Serial.println("Saved new bulb configuration in EEPROM");
+  EEPROM.begin(USED_EEPROM_SIZE);
+  int nargs = server.args();
+  unsigned int eeprom_addr = 4;
+
+  nabulbs = 0;
+  memset(abulbs, 0, sizeof(abulbs));
+  if(nargs) {
+    if (nargs <= MAX_ACTIVE_BULBS) {
+      for(int i = 0; i < nargs; i++) {
+        unsigned char n = server.arg(i).c_str()[0] - '0';
+        if (n < MAX_ACTIVE_BULBS && n < nbulbs && bulbs[n]) {
+          char bulbid_c[YL_ID_LENGTH + 1] = {0,};
+          strncpy(bulbid_c, bulbs[n]->GetID(), YL_ID_LENGTH);
+          EEPROM.put(eeprom_addr, bulbid_c);
+          eeprom_addr += sizeof(bulbid_c);
+          abulbs[nabulbs++] = bulbs[n];
+        } else
+          Serial.printf("Bulb #%d does not exist\n", n);
+      }
+
+      if (nabulbs) {
+
+        // Write the header
+        EEPROM.write(0, 'Y');
+        EEPROM.write(1, 'B');
+        EEPROM.write(2, EEPROM_FORMAT_VERSION);
+        EEPROM.write(3, nabulbs);
+        Serial.printf("%d bulb%s stored in EEPROM, using %u out of %u byte(s) allocated\n", nabulbs, nabulbs == 1 ? "" : "s", eeprom_addr, USED_EEPROM_SIZE);
+      } else
+        Serial.println("No bulbs were stored in EEPROM");
     } else
-      Serial.println("Error saving new bulb configuration: the bulb does not exist");
+      Serial.printf("Number of bulbs to store (%d) exceeds the supported limit of %d\n", nargs, MAX_ACTIVE_BULBS);
   } else {
-    currbulb = NULL;
+
+    // Unlink all
 
     // Overwriting the EEPROM marker will effectively cause forgetting the settings
     EEPROM.write(0, 0);
-    Serial.println("Bulb unlinked from the switch");
+    Serial.println("Bulbs unlinked from the switch");
   }
+
+  // TODO: check for errors?
   EEPROM.commit();
   EEPROM.end();
 
   String page = "<html><head><title>";
   page += HOSTNAME;
-  page += bulbid == "" || bulb_exists ? " saved" : " error";
+  page += nabulbs || !nargs ? " saved" : " error";
   page += "</title></head><body><h3>Yeelight Button Configuration ";
-  page += bulbid == "" || bulb_exists ?  "Saved" : " Error";
+  page += nabulbs || !nargs ?  "Saved" : " Error";
   page += "</h3>";
-  if (bulbid == "")
-    page += "<p>Bulb unlinked</p>";
-  else {
-    if (!bulb_exists)
-      page += "<p>The selected bulb does not exist</p>";
-  }
+  if (nargs) {
+    if (nabulbs) {
+      page += "<p>";
+      page += nabulbs;
+      page += " bulb";
+      if (nabulbs != 1)
+        page += "s";
+      page += " linked</p>";
+    } else
+      page += "<p>Too many bulbs passed</p>";
+  } else
+    page += "<p>Bulbs unlinked</p>";
   page += "<p>[<a href=\"..\">Back</a>]</p>";
   page += "</body></html>";
   server.send(200, "text/html", page);
@@ -358,7 +400,7 @@ void handleFlip() {
   String page = "<html><head><title>";
   page += HOSTNAME;
   page += " flip</title></head><body><h3>Yeelight Button Flip</h3>";
-  page += currbulb ? "<p>Bulb flipped</p>" : "<p>No linked bulb found</p>";
+  page += nabulbs ? "<p>Light flipped</p>" : "<p>No linked bulbs found</p>";
   page += "<p>[<a href=\"/flip\">Flip</a>] [<a href=\"..\">Back</a>]</p>";
   page += "</body></html>";
   server.send(200, "text/html", page);
@@ -416,27 +458,34 @@ void setup(void) {
     Serial.println("Connection timeout");
   }
 
-  // Load settings from EEPROM
-  char bulbid_c[YL_ID_LENGTH + 1] = {0,};
-  EEPROM.begin(USED_EEPROM_SIZE);
-  if (EEPROM.read(0) == 'Y' && EEPROM.read(1) == 'B') {
-    EEPROM.get(2, bulbid_c);
-    Serial.printf("Found bulb configuration in EEPROM: %s\n", bulbid_c);
+  // Run discovery
+  yl_discover();
 
-    // Run discovery and hook up to the stored bulb, if found
-    yl_discover();
-    unsigned short i;
-    for (i = 0; i < nbulbs; i++)
-      if (!strcmp(bulbid_c, bulbs[i]->GetID())) {
-        currbulb = bulbs[i];
-        break;
+  // Load settings from EEPROM
+  EEPROM.begin(USED_EEPROM_SIZE);
+  if (EEPROM.read(0) == 'Y' && EEPROM.read(1) == 'B' && EEPROM.read(2) == EEPROM_FORMAT_VERSION) {
+    char bulbid_c[YL_ID_LENGTH + 1] = {0,};
+    unsigned int eeprom_addr = 4;
+    unsigned char n = 0;
+    n = EEPROM.read(3);
+    Serial.printf("Found %d bulb%s configuration in EEPROM\n", n, n == 1 ? "" : "s");
+    for (unsigned char i = 0; i < n; i++) {
+      EEPROM.get(eeprom_addr, bulbid_c);
+      eeprom_addr += sizeof(bulbid_c);
+
+      for (unsigned char j = 0; j < nbulbs; j++)
+        if (!strcmp(bulbid_c, bulbs[j]->GetID())) {
+          abulbs[nabulbs++] = bulbs[j];
+          break;
+      }
     }
-    if (i < nbulbs)
-      Serial.printf("Previously saved bulb %s is online; linking to it\n", bulbid_c);
+
+    if (nabulbs == n)
+      Serial.printf("Successfully linked to %d bulb%s\n", nabulbs, nabulbs == 1 ? "" : "s");
     else
-      Serial.printf("Previously saved bulb %s is not online; skipping\n", bulbid_c);
+      Serial.printf("Linking completed with %d out of %d bulb%s skipped\n", n - nabulbs, n, n == 1 ? "" : "s");
   } else
-    Serial.println("No bulb configuration found in EEPROM; need to link a bulb manually");
+    Serial.println("No bulb configuration found in EEPROM; need to link bulbs manually");
   EEPROM.end();
 
   // Kick off mDNS
@@ -450,6 +499,7 @@ void setup(void) {
   server.on("/flip", handleFlip);
   server.begin();
   Serial.println("Web server started");
+  
 }
 
 // Program loop
@@ -460,9 +510,9 @@ void loop(void) {
   if (button_state != button_state_prev) {
 
     // LED diagnostics:
-    // 1 blink  - bulb flip OK
-    // 1 + 2 blinks - the bulb did not respond
-    // 2 blinks - button not linked to a bulb
+    // 1 blink  - light flip OK
+    // 1 + 2 blinks - one of the bulbs did not respond
+    // 2 blinks - button not linked to bulbs
     // 1 long blink - Wi-Fi disconnected
     if (button_state == LOW) {
       Serial.println("Button ON");
@@ -474,7 +524,7 @@ void loop(void) {
         delay(BLINK_DELAY * 10);          // Long blink
         digitalWrite(BUILTINLED, HIGH);
       } else {
-        if (currbulb) {
+        if (nabulbs) {
 
           digitalWrite(BUILTINLED, LOW);
           delay(BLINK_DELAY);
@@ -482,10 +532,10 @@ void loop(void) {
 
           if (yl_flip()) {
 
-            // Bulb did not respond
+            // Some bulbs did not respond
             // Because of connection timeout, the blinking will be 1 + pause + 2
             for (unsigned int i = 0; i < 2; i++) {
-              delay(BLINK_DELAY);
+              delay(BLINK_DELAY * 2);
               digitalWrite(BUILTINLED, LOW);
               delay(BLINK_DELAY);
               digitalWrite(BUILTINLED, HIGH);
@@ -494,11 +544,11 @@ void loop(void) {
         } else {
 
           // Button not linked
-          Serial.println("Button not linked to a bulb");
+          Serial.println("Button not linked to bulbs");
           digitalWrite(BUILTINLED, LOW);
           delay(BLINK_DELAY);
           digitalWrite(BUILTINLED, HIGH);
-          delay(BLINK_DELAY);
+          delay(BLINK_DELAY * 2);
           digitalWrite(BUILTINLED, LOW);
           delay(BLINK_DELAY);
           digitalWrite(BUILTINLED, HIGH);
