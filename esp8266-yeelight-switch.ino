@@ -93,7 +93,8 @@ WiFiUDP udp;                        // UDP socket used for discovery process
 ESP8266WebServer server(80);        // Switch configuration web server
 
 #define MAX_DISCOVERY_REPLY_SIZE 512 // With current bulbs, the reply is about 500 bytes
-char discovery_reply[MAX_DISCOVERY_REPLY_SIZE]; // Buffer to hold one discovery reply 
+char discovery_reply[MAX_DISCOVERY_REPLY_SIZE]; // Buffer to hold one discovery reply
+#define CONNECTION_TIMEOUT 1000     // Bulb connection timeout (ms)
 
 #define MAX_BULBS 24                // Max number of bulbs which can be handled by the discovery process
 #define MAX_ACTIVE_BULBS 8          // Max number of active bulbs
@@ -499,7 +500,9 @@ void setup(void) {
   server.on("/flip", handleFlip);
   server.begin();
   Serial.println("Web server started");
-  
+
+  // Reduce connection timeout for inactive bulbs
+  client.setTimeout(CONNECTION_TIMEOUT);
 }
 
 // Program loop
