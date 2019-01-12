@@ -1,12 +1,15 @@
 ESP8266-YEELIGHT-SWITCH CHANGELOG:
 
 v1.1.0		12 Jan 2019
+
 Features:
 * #1: Support for multiple bulb switching
+
 Bug fixes:
 * #6: Switch unlinking is not remembered
 
 v1.0.0		05 Jan 2019
+
 Features:
 * Use of local API, meaning nearly instantaneous light switching;
 * Support for Yeelight devices discovery on the network;
