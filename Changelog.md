@@ -1,5 +1,12 @@
 ESP8266-YEELIGHT-SWITCH CHANGELOG:
 
+v1.1.1		09 Sep 2019
+Features:
+* #17: porting to ESP8266 Core 2.5
+
+Bug fixes:
+* #16: Hiding the SSID of the esp8266 once it has been setup
+
 v1.1.0		12 Jan 2019
 
 Features:
