@@ -564,6 +564,7 @@ void loop(void) {
     button_state_prev = button_state;
   }
 
-  // Process HTTP traffic
+  // Background processing
   server.handleClient();
+  MDNS.update();
 }
