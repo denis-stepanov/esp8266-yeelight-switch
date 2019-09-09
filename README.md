@@ -38,7 +38,7 @@ Usage:
     1. Push button connected to a GPIO and pulled high;
  1. Software:
     1. Arduino IDE, https://www.arduino.cc/en/main/software (version tested: 1.8.5);
-    1. ESP8266 core for Arduino, https://github.com/esp8266/Arduino (version tested: 2.4.2);
+    1. ESP8266 core for Arduino, https://github.com/esp8266/Arduino (version tested: 2.5.2);
     1. WiFiManager library for Arduino, https://github.com/tzapu/WiFiManager (version tested: 0.14.0).
  
  If you have an ESP with an onboard button, such as Witty Cloud Development board, the program can be used out of the box. Otherwise you need to wire the button and update the GPIO number in the source code.
