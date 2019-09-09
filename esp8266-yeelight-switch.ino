@@ -434,6 +434,7 @@ void setup(void) {
   // Network
   builtinled_state = HIGH;
   digitalWrite(BUILTINLED, builtinled_state);
+  WiFi.mode(WIFI_STA);      // Important to avoid starting with an access point
   WiFi.hostname(HOSTNAME);
   WiFi.begin();             // Connect using stored credentials
   Serial.print("Connecting to ");
