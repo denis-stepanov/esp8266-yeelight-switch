@@ -15,6 +15,9 @@
 #include <ESP8266WiFi.h>      // https://github.com/esp8266/Arduino
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
+#include <AceButton.h>        // https://github.com/bxparks/AceButton
+
+using namespace ace_button;
 
 // Configuration
 const char *HOSTNAME = "ybutton1";        // <hostname>.local of the button in the local network. Also SSID of the temporary network for Wi-Fi configuration
@@ -85,7 +88,7 @@ void YBulb::SetModel(char *ymodel) {
 }
 
 // Global variables
-int button_state = HIGH, button_state_prev = HIGH;
+AceButton button(PUSHBUTTON);
 int builtinled_state = HIGH;
 
 WiFiClient client;                  // Client used to talk to a bulb
@@ -214,6 +217,59 @@ int yl_flip(void) {
     ret = -1;
   }
   return ret;
+}
+
+// Button handler
+#define BLINK_DELAY 100     // (ms)
+void handleButtonEvent(AceButton*, uint8_t eventType, uint8_t /* buttonState */) {
+
+  if (eventType == AceButton::kEventPressed) {
+
+    // LED diagnostics:
+    // 1 blink  - light flip OK
+    // 1 + 2 blinks - one of the bulbs did not respond
+    // 2 blinks - button not linked to bulbs
+    // 1 long blink - Wi-Fi disconnected
+    Serial.println("Button clicked");
+    if (WiFi.status() != WL_CONNECTED) {
+
+      // No Wi-Fi
+      Serial.println("No Wi-Fi connection");
+      digitalWrite(BUILTINLED, LOW);
+      delay(BLINK_DELAY * 10);          // Long blink
+      digitalWrite(BUILTINLED, HIGH);
+    } else {
+      if (nabulbs) {
+
+        digitalWrite(BUILTINLED, LOW);
+        delay(BLINK_DELAY);
+        digitalWrite(BUILTINLED, HIGH);
+
+        if (yl_flip()) {
+
+          // Some bulbs did not respond
+          // Because of connection timeout, the blinking will be 1 + pause + 2
+          for (unsigned int i = 0; i < 2; i++) {
+            delay(BLINK_DELAY * 2);
+            digitalWrite(BUILTINLED, LOW);
+            delay(BLINK_DELAY);
+            digitalWrite(BUILTINLED, HIGH);
+          }
+        }
+      } else {
+
+        // Button not linked
+        Serial.println("Button not linked to bulbs");
+        digitalWrite(BUILTINLED, LOW);
+        delay(BLINK_DELAY);
+        digitalWrite(BUILTINLED, HIGH);
+        delay(BLINK_DELAY * 2);
+        digitalWrite(BUILTINLED, LOW);
+        delay(BLINK_DELAY);
+        digitalWrite(BUILTINLED, HIGH);
+      }
+    }
+  }
 }
 
 // Web server configuration pages
@@ -421,8 +477,7 @@ void setup(void) {
   digitalWrite(BUILTINLED, builtinled_state);
 
   // If the push button is pressed on boot, offer Wi-Fi configuration
-  button_state = digitalRead(PUSHBUTTON);
-  if (button_state == LOW) {
+  if (button.isPressedRaw()) {
     Serial.println("Push button pressed on boot; going to Wi-Fi Manager");
     builtinled_state = LOW;
     digitalWrite(BUILTINLED, builtinled_state);
@@ -430,6 +485,7 @@ void setup(void) {
     WiFiManager wifiManager;
     wifiManager.startConfigPortal(HOSTNAME, WIFICONFIGPASS);
   }
+  button.setEventHandler(handleButtonEvent);
 
   // Network
   builtinled_state = HIGH;
@@ -507,62 +563,10 @@ void setup(void) {
 }
 
 // Program loop
-#define BLINK_DELAY 100     // (ms)
 void loop(void) {
-  
-  button_state = digitalRead(PUSHBUTTON);
-  if (button_state != button_state_prev) {
 
-    // LED diagnostics:
-    // 1 blink  - light flip OK
-    // 1 + 2 blinks - one of the bulbs did not respond
-    // 2 blinks - button not linked to bulbs
-    // 1 long blink - Wi-Fi disconnected
-    if (button_state == LOW) {
-      Serial.println("Button ON");
-      if (WiFi.status() != WL_CONNECTED) {
-
-        // No Wi-Fi
-        Serial.println("No Wi-Fi connection");
-        digitalWrite(BUILTINLED, LOW);
-        delay(BLINK_DELAY * 10);          // Long blink
-        digitalWrite(BUILTINLED, HIGH);
-      } else {
-        if (nabulbs) {
-
-          digitalWrite(BUILTINLED, LOW);
-          delay(BLINK_DELAY);
-          digitalWrite(BUILTINLED, HIGH);
-
-          if (yl_flip()) {
-
-            // Some bulbs did not respond
-            // Because of connection timeout, the blinking will be 1 + pause + 2
-            for (unsigned int i = 0; i < 2; i++) {
-              delay(BLINK_DELAY * 2);
-              digitalWrite(BUILTINLED, LOW);
-              delay(BLINK_DELAY);
-              digitalWrite(BUILTINLED, HIGH);
-            }
-          }
-        } else {
-
-          // Button not linked
-          Serial.println("Button not linked to bulbs");
-          digitalWrite(BUILTINLED, LOW);
-          delay(BLINK_DELAY);
-          digitalWrite(BUILTINLED, HIGH);
-          delay(BLINK_DELAY * 2);
-          digitalWrite(BUILTINLED, LOW);
-          delay(BLINK_DELAY);
-          digitalWrite(BUILTINLED, HIGH);
-        }
-      }
-    } else
-      Serial.println("Button OFF");
-
-    button_state_prev = button_state;
-  }
+  // Check the button state
+  button.check();
 
   // Background processing
   server.handleClient();
