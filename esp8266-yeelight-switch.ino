@@ -57,6 +57,7 @@ class YBulb {
     void SetModel(const char *);
     bool GetPower() const { return power; }
     void SetPower(const bool ypower) { power = ypower; }
+    int Flip(WiFiClient&) const;
 };
 
 // To create a bulb, pass its ID and IP-address
@@ -85,6 +86,15 @@ void YBulb::SetModel(const char *ymodel) {
     memset(model, 0, sizeof(model));
     strncpy(model, ymodel, sizeof(model) - 1);
   }
+}
+
+int YBulb::Flip(WiFiClient &wfc) const {
+  if (wfc.connect(ip, port)) {
+    wfc.print(YL_MSG_TOGGLE);
+    wfc.stop();
+    return 0;
+  } else
+    return -1;
 }
 
 // Global variables
@@ -209,15 +219,12 @@ int yl_flip(void) {
   int ret = 0;
   if (nabulbs) {
     for (unsigned char i = 0; i < nabulbs; i++)
-      if (client.connect(abulbs[i]->GetIP(), abulbs[i]->GetPort())) {
-        client.print(YL_MSG_TOGGLE);
-        client.stop();
-        Serial.printf("Bulb %d toggle sent\n", i + 1);
-      } else {
+      if (abulbs[i]->Flip(client)) {
         Serial.printf("Bulb connection to %s failed\n", abulbs[i]->GetIP());
         ret = -2;
-        yield();
-      }
+        yield();        // Connection timeout is lenghty; allow for background processing (is this really needed?)
+      } else
+        Serial.printf("Bulb %d toggle sent\n", i + 1);
   } else {
     Serial.println("No linked bulbs found");
     ret = -1;
