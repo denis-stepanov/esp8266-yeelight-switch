@@ -34,7 +34,7 @@ const unsigned int BAUDRATE = 115200;     // Serial connection speed
 // Yeelight protocol; see https://www.yeelight.com/en_US/developer
 const char *YL_MSG_TOGGLE PROGMEM = "{\"id\":1,\"method\":\"toggle\",\"params\":[]}\r\n";
 const char *YL_MSG_DISCOVER PROGMEM = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1982\r\nMAN: \"ssdp:discover\"\r\nST: wifi_bulb";
-#define YL_ID_LENGTH 18
+const unsigned int YL_ID_LENGTH = 18U;
 
 // Yeelight bulb object. TODO: make a library out of this
 class YBulb {
@@ -46,21 +46,21 @@ class YBulb {
     bool power;
 
   public:
-    YBulb(char *, char *, uint16_t);
+    YBulb(const char *, const char *, const uint16_t);
     ~YBulb(){};
-    char *GetID() { return id; }
-    char *GetIP() { return ip; }
-    uint16_t GetPort() { return port; }
-    char *GetName() { return name; }
-    void SetName(char *);
-    char *GetModel() { return model; }
-    void SetModel(char *);
-    bool GetPower() {return power; }
-    void SetPower(bool ypower) {power = ypower; }
+    const char *GetID() const { return id; }
+    const char *GetIP() const { return ip; }
+    uint16_t GetPort() const { return port; }
+    const char *GetName() const { return name; }
+    void SetName(const char *);
+    const char *GetModel() const { return model; }
+    void SetModel(const char *);
+    bool GetPower() const { return power; }
+    void SetPower(const bool ypower) { power = ypower; }
 };
 
 // To create a bulb, pass its ID and IP-address
-YBulb::YBulb(char *yid, char *yip, uint16_t yport = 55443) {
+YBulb::YBulb(const char *yid, const char *yip, const uint16_t yport = 55443) {
   memset(id, 0, sizeof(id));
   if (yid)
     strncpy(id, yid, sizeof(id) - 1);
@@ -73,14 +73,14 @@ YBulb::YBulb(char *yid, char *yip, uint16_t yport = 55443) {
   power = false;
 }
 
-void YBulb::SetName(char *yname) {
+void YBulb::SetName(const char *yname) {
   if (yname) {
     memset(name, 0, sizeof(name));
     strncpy(name, yname, sizeof(name) - 1);
   }
 }
 
-void YBulb::SetModel(char *ymodel) {
+void YBulb::SetModel(const char *ymodel) {
   if (ymodel) {
     memset(model, 0, sizeof(model));
     strncpy(model, ymodel, sizeof(model) - 1);
@@ -94,18 +94,18 @@ int builtinled_state = HIGH;
 
 WiFiClient client;                  // Client used to talk to a bulb
 WiFiUDP udp;                        // UDP socket used for discovery process
-ESP8266WebServer server(80);        // Switch configuration web server
+ESP8266WebServer server;            // Switch configuration web server
 
-#define MAX_DISCOVERY_REPLY_SIZE 512 // With current bulbs, the reply is about 500 bytes
+const unsigned int MAX_DISCOVERY_REPLY_SIZE = 512U; // With current bulbs, the reply is about 500 bytes
 char discovery_reply[MAX_DISCOVERY_REPLY_SIZE]; // Buffer to hold one discovery reply
-#define CONNECTION_TIMEOUT 1000     // Bulb connection timeout (ms)
+const uint16_t CONNECTION_TIMEOUT = 1000U;  // Bulb connection timeout (ms)
 
-#define MAX_BULBS 24                // Max number of bulbs which can be handled by the discovery process
-#define MAX_ACTIVE_BULBS 8          // Max number of active bulbs
-YBulb *bulbs[MAX_BULBS] = {NULL,};  // List of all known bulbs
-unsigned char nbulbs = 0;           // Size of the list (<= MAX_BULBS)
-YBulb *abulbs[MAX_ACTIVE_BULBS] = {NULL,}; // Pointers to the bulbs in use
-unsigned char nabulbs = 0;          // Size of the list (<= MAX_ACTIVE_BULBS)
+const unsigned int MAX_BULBS = 24U; // Max number of bulbs which can be handled by the discovery process
+const unsigned int MAX_ACTIVE_BULBS = 8U; // Max number of active bulbs
+YBulb *bulbs[MAX_BULBS] = {nullptr,}; // List of all known bulbs
+uint8_t nbulbs = 0;                 // Size of the list (<= MAX_BULBS)
+YBulb *abulbs[MAX_ACTIVE_BULBS] = {nullptr,}; // Pointers to the bulbs in use
+uint8_t nabulbs = 0;                // Size of the list (<= MAX_ACTIVE_BULBS)
 
 // Button handler
 void handleButtonEvent(AceButton* /* button */, uint8_t eventType, uint8_t /* buttonState */) {
@@ -113,10 +113,10 @@ void handleButtonEvent(AceButton* /* button */, uint8_t eventType, uint8_t /* bu
 }
 
 // Yeelight discovery. Note - no bulb removal at the moment
-#define DISCOVERY_TIMEOUT 3000      // (ms)
 void yl_discover(void) {
-  IPAddress upnp_ip(239,255,255,250); // Yeelight is using a flavor of UPnP protocol
-  uint16_t upnp_port_yeelight = 1982; // but the port is different from standard
+  const unsigned long DISCOVERY_TIMEOUT = 3000UL;   // (ms)
+  const IPAddress upnp_ip(239,255,255,250);         // Yeelight is using a flavor of UPnP protocol
+  const uint16_t upnp_port_yeelight = 1982U;        // but the port is different from standard
 
   // Send broadcast message
   Serial.println("Sending Yeelight discovery request...");
@@ -142,8 +142,8 @@ void yl_discover(void) {
       if (len > 0) {
         discovery_reply[len] = 0;
 
-        YBulb *bulb = NULL;
-        char *line_ctx, *host = NULL, *port = NULL;
+        YBulb *bulb = nullptr;
+        char *line_ctx, *host = nullptr, *port = nullptr;
         char *token = strtok_r(discovery_reply, "\r\n", &line_ctx);
         while (token) {
           char hostport[24];
@@ -151,11 +151,11 @@ void yl_discover(void) {
           if (!strncmp(token, "Location: ", 10)) {
             if (strtok(token, "/")) {
               memset(hostport, 0, sizeof(hostport));
-              strncpy(hostport, strtok(NULL, "/"), sizeof(hostport) - 1);
+              strncpy(hostport, strtok(nullptr, "/"), sizeof(hostport) - 1);
             }
           } else if (!strncmp(token, "id: ", 4)) {
             strtok(token, " ");
-            token = strtok(NULL, " ");
+            token = strtok(nullptr, " ");
 
             // Check if we already have this bulb in the list
             bool bulb_exists = false;
@@ -171,7 +171,7 @@ void yl_discover(void) {
 
               // Register
               host = strtok(hostport, ":");
-              port = strtok(NULL, ":");
+              port = strtok(nullptr, ":");
               if (nbulbs < MAX_BULBS && host && port) {
                 bulb = new YBulb(token, host, atoi(port));
                 bulbs[nbulbs++] = bulb;
@@ -181,21 +181,21 @@ void yl_discover(void) {
             }
           } else if (!strncmp(token, "model: ", 7)) {
             if (strtok(token, " ") && bulb) {
-              bulb->SetModel(strtok(NULL, " "));
+              bulb->SetModel(strtok(nullptr, " "));
               Serial.printf("Bulb model: %s\n", bulb->GetModel());
             }
           } else if (!strncmp(token, "name: ", 6)) {
             if (strtok(token, " ") && bulb) {
-              bulb->SetName(strtok(NULL, " "));
+              bulb->SetName(strtok(nullptr, " "));
               Serial.printf("Bulb name: %s\n", bulb->GetName());   // Currently, Yeelights always seem to return an empty name here :(
             }
           } else if (!strncmp(token, "power: ", 7)) {
             if (strtok(token, " ") && bulb) {
-              bulb->SetPower(strcmp(strtok(NULL, " "), "off"));
+              bulb->SetPower(strcmp(strtok(nullptr, " "), "off"));
               Serial.printf("Bulb power: %s\n", bulb->GetPower() ? "on" : "off");
             }
           } 
-          token = strtok_r(NULL, "\r\n", &line_ctx);
+          token = strtok_r(nullptr, "\r\n", &line_ctx);
         }
       }    
     }
@@ -299,11 +299,11 @@ void handleConf() {
   page += MAX_ACTIVE_BULBS;
   page += " max).</p>";
   page += "<form action=\"/save\"><p style=\"font-family: monospace;\">";
-  for (unsigned char i = 0; i < nbulbs; i++) {
+  for (uint8_t i = 0; i < nbulbs; i++) {
     page += "<input type=\"checkbox\" name=\"bulb\" value=\"";
     page += i;
     page += "\"";
-    for (unsigned char j = 0; j < nabulbs; j++)
+    for (uint8_t j = 0; j < nabulbs; j++)
       if (abulbs[j] == bulbs[i])
         page += " checked";
     page += "/> ";
@@ -331,19 +331,19 @@ void handleConf() {
 //     3: number of stored bulbs
 //  4-22: <selected bulb ID> (19 bytes, null-terminated)
 //      : ...
-#define USED_EEPROM_SIZE (2 + 1 + 1 + (YL_ID_LENGTH + 1) * MAX_ACTIVE_BULBS)
-#define EEPROM_FORMAT_VERSION 49    // The first version of the format stored 1 bulb id right after the marker. ID stars with ASCII '0' == 48
+const size_t USED_EEPROM_SIZE = 2 + 1 + 1 + (YL_ID_LENGTH + 1) * MAX_ACTIVE_BULBS;
+const uint8_t EEPROM_FORMAT_VERSION = 49U;  // The first version of the format stored 1 bulb id right after the marker. ID stars with ASCII '0' == 48
 void handleSave() {
 
   EEPROM.begin(USED_EEPROM_SIZE);
-  int nargs = server.args();
+  unsigned int nargs = server.args();
   unsigned int eeprom_addr = 4;
 
   nabulbs = 0;
   memset(abulbs, 0, sizeof(abulbs));
   if(nargs) {
     if (nargs <= MAX_ACTIVE_BULBS) {
-      for(int i = 0; i < nargs; i++) {
+      for(unsigned int i = 0; i < nargs; i++) {
         unsigned char n = server.arg(i).c_str()[0] - '0';
         if (n < MAX_ACTIVE_BULBS && n < nbulbs && bulbs[n]) {
           char bulbid_c[YL_ID_LENGTH + 1] = {0,};
@@ -417,7 +417,7 @@ void handleFlip() {
 }
 
 // Program setup
-#define WIFI_CONNECT_TIMEOUT 20000  // (ms)
+const unsigned long WIFI_CONNECT_TIMEOUT = 20000UL;  // (ms)
 void setup(void) {
 
   // Serial line  
@@ -477,14 +477,13 @@ void setup(void) {
   if (EEPROM.read(0) == 'Y' && EEPROM.read(1) == 'B' && EEPROM.read(2) == EEPROM_FORMAT_VERSION) {
     char bulbid_c[YL_ID_LENGTH + 1] = {0,};
     unsigned int eeprom_addr = 4;
-    unsigned char n = 0;
-    n = EEPROM.read(3);
+    const uint8_t n = EEPROM.read(3);
     Serial.printf("Found %d bulb%s configuration in EEPROM\n", n, n == 1 ? "" : "s");
-    for (unsigned char i = 0; i < n; i++) {
+    for (uint8_t i = 0; i < n; i++) {
       EEPROM.get(eeprom_addr, bulbid_c);
       eeprom_addr += sizeof(bulbid_c);
 
-      for (unsigned char j = 0; j < nbulbs; j++)
+      for (uint8_t j = 0; j < nbulbs; j++)
         if (!strcmp(bulbid_c, bulbs[j]->GetID())) {
           abulbs[nabulbs++] = bulbs[j];
           break;
@@ -516,7 +515,7 @@ void setup(void) {
 }
 
 // Program loop
-#define BLINK_DELAY 100             // (ms)
+const unsigned long BLINK_DELAY = 100UL;    // (ms)
 void loop(void) {
 
   // Check the button state
@@ -548,7 +547,7 @@ void loop(void) {
 
           // Some bulbs did not respond
           // Because of connection timeout, the blinking will be 1 + pause + 2
-          for (unsigned int i = 0; i < 2; i++) {
+          for (uint8_t i = 0; i < 2; i++) {
             delay(BLINK_DELAY * 2);
             digitalWrite(BUILTINLED, LOW);
             delay(BLINK_DELAY);
