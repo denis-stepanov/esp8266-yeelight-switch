@@ -108,7 +108,6 @@ YBulb *abulbs[MAX_ACTIVE_BULBS] = {NULL,}; // Pointers to the bulbs in use
 unsigned char nabulbs = 0;          // Size of the list (<= MAX_ACTIVE_BULBS)
 
 // Button handler
-#define BLINK_DELAY 100             // (ms)
 void handleButtonEvent(AceButton* /* button */, uint8_t eventType, uint8_t /* buttonState */) {
   button_pressed = eventType == AceButton::kEventPressed;
 }
@@ -517,6 +516,7 @@ void setup(void) {
 }
 
 // Program loop
+#define BLINK_DELAY 100             // (ms)
 void loop(void) {
 
   // Check the button state
@@ -535,7 +535,7 @@ void loop(void) {
       // No Wi-Fi
       Serial.println("No Wi-Fi connection");
       digitalWrite(BUILTINLED, LOW);
-      delay(BLINK_DELAY * 10);          // Long blink
+      delay(BLINK_DELAY * 10);          // Long blink. These delays take long time, but background processing would still work
       digitalWrite(BUILTINLED, HIGH);
     } else {
       if (nabulbs) {
