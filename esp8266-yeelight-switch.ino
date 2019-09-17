@@ -89,6 +89,7 @@ void YBulb::SetModel(char *ymodel) {
 
 // Global variables
 AceButton button(PUSHBUTTON);
+bool button_pressed = false;
 int builtinled_state = HIGH;
 
 WiFiClient client;                  // Client used to talk to a bulb
@@ -105,6 +106,12 @@ YBulb *bulbs[MAX_BULBS] = {NULL,};  // List of all known bulbs
 unsigned char nbulbs = 0;           // Size of the list (<= MAX_BULBS)
 YBulb *abulbs[MAX_ACTIVE_BULBS] = {NULL,}; // Pointers to the bulbs in use
 unsigned char nabulbs = 0;          // Size of the list (<= MAX_ACTIVE_BULBS)
+
+// Button handler
+#define BLINK_DELAY 100             // (ms)
+void handleButtonEvent(AceButton* /* button */, uint8_t eventType, uint8_t /* buttonState */) {
+  button_pressed = eventType == AceButton::kEventPressed;
+}
 
 // Yeelight discovery. Note - no bulb removal at the moment
 #define DISCOVERY_TIMEOUT 3000      // (ms)
@@ -217,59 +224,6 @@ int yl_flip(void) {
     ret = -1;
   }
   return ret;
-}
-
-// Button handler
-#define BLINK_DELAY 100     // (ms)
-void handleButtonEvent(AceButton*, uint8_t eventType, uint8_t /* buttonState */) {
-
-  if (eventType == AceButton::kEventPressed) {
-
-    // LED diagnostics:
-    // 1 blink  - light flip OK
-    // 1 + 2 blinks - one of the bulbs did not respond
-    // 2 blinks - button not linked to bulbs
-    // 1 long blink - Wi-Fi disconnected
-    Serial.println("Button clicked");
-    if (WiFi.status() != WL_CONNECTED) {
-
-      // No Wi-Fi
-      Serial.println("No Wi-Fi connection");
-      digitalWrite(BUILTINLED, LOW);
-      delay(BLINK_DELAY * 10);          // Long blink
-      digitalWrite(BUILTINLED, HIGH);
-    } else {
-      if (nabulbs) {
-
-        digitalWrite(BUILTINLED, LOW);
-        delay(BLINK_DELAY);
-        digitalWrite(BUILTINLED, HIGH);
-
-        if (yl_flip()) {
-
-          // Some bulbs did not respond
-          // Because of connection timeout, the blinking will be 1 + pause + 2
-          for (unsigned int i = 0; i < 2; i++) {
-            delay(BLINK_DELAY * 2);
-            digitalWrite(BUILTINLED, LOW);
-            delay(BLINK_DELAY);
-            digitalWrite(BUILTINLED, HIGH);
-          }
-        }
-      } else {
-
-        // Button not linked
-        Serial.println("Button not linked to bulbs");
-        digitalWrite(BUILTINLED, LOW);
-        delay(BLINK_DELAY);
-        digitalWrite(BUILTINLED, HIGH);
-        delay(BLINK_DELAY * 2);
-        digitalWrite(BUILTINLED, LOW);
-        delay(BLINK_DELAY);
-        digitalWrite(BUILTINLED, HIGH);
-      }
-    }
-  }
 }
 
 // Web server configuration pages
@@ -567,6 +521,54 @@ void loop(void) {
 
   // Check the button state
   button.check();
+  if (button_pressed) {
+    button_pressed = false;
+
+    // LED diagnostics:
+    // 1 blink  - light flip OK
+    // 1 + 2 blinks - one of the bulbs did not respond
+    // 2 blinks - button not linked to bulbs
+    // 1 long blink - Wi-Fi disconnected
+    Serial.println("Button clicked");
+    if (WiFi.status() != WL_CONNECTED) {
+
+      // No Wi-Fi
+      Serial.println("No Wi-Fi connection");
+      digitalWrite(BUILTINLED, LOW);
+      delay(BLINK_DELAY * 10);          // Long blink
+      digitalWrite(BUILTINLED, HIGH);
+    } else {
+      if (nabulbs) {
+
+        digitalWrite(BUILTINLED, LOW);
+        delay(BLINK_DELAY);
+        digitalWrite(BUILTINLED, HIGH);
+
+        if (yl_flip()) {
+
+          // Some bulbs did not respond
+          // Because of connection timeout, the blinking will be 1 + pause + 2
+          for (unsigned int i = 0; i < 2; i++) {
+            delay(BLINK_DELAY * 2);
+            digitalWrite(BUILTINLED, LOW);
+            delay(BLINK_DELAY);
+            digitalWrite(BUILTINLED, HIGH);
+          }
+        }
+      } else {
+
+        // Button not linked
+        Serial.println("Button not linked to bulbs");
+        digitalWrite(BUILTINLED, LOW);
+        delay(BLINK_DELAY);
+        digitalWrite(BUILTINLED, HIGH);
+        delay(BLINK_DELAY * 2);
+        digitalWrite(BUILTINLED, LOW);
+        delay(BLINK_DELAY);
+        digitalWrite(BUILTINLED, HIGH);
+      }
+    }
+  }
 
   // Background processing
   server.handleClient();
