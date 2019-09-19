@@ -16,6 +16,7 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <AceButton.h>        // https://github.com/bxparks/AceButton
+#include <LinkedList.h>       // https://github.com/ivanseidel/LinkedList
 
 using namespace ace_button;
 
@@ -44,6 +45,7 @@ class YBulb {
     char name[32];
     char model[16];
     bool power;
+    bool active;
 
   public:
     YBulb(const char *, const char *, const uint16_t);
@@ -57,21 +59,23 @@ class YBulb {
     void SetModel(const char *);
     bool GetPower() const { return power; }
     void SetPower(const bool ypower) { power = ypower; }
+    bool isActive() const { return active; }
+    void Activate() { active = true; }
+    void Deactivate() { active = false; }
     int Flip(WiFiClient&) const;
 };
 
 // To create a bulb, pass its ID and IP-address
-YBulb::YBulb(const char *yid, const char *yip, const uint16_t yport = 55443) {
+YBulb::YBulb(const char *yid, const char *yip, const uint16_t yport = 55443) :
+  port(yport), power(false), active(false) {
   memset(id, 0, sizeof(id));
   if (yid)
     strncpy(id, yid, sizeof(id) - 1);
   memset(ip, 0, sizeof(ip));
   if (yip)
     strncpy(ip, yip, sizeof(ip) - 1);
-  port = yport;
   memset(name, 0, sizeof(name));
   memset(model, 0, sizeof(model));
-  power = false;
 }
 
 void YBulb::SetName(const char *yname) {
@@ -110,12 +114,8 @@ const unsigned int MAX_DISCOVERY_REPLY_SIZE = 512U; // With current bulbs, the r
 char discovery_reply[MAX_DISCOVERY_REPLY_SIZE]; // Buffer to hold one discovery reply
 const uint16_t CONNECTION_TIMEOUT = 1000U;  // Bulb connection timeout (ms)
 
-const unsigned int MAX_BULBS = 24U; // Max number of bulbs which can be handled by the discovery process
-const unsigned int MAX_ACTIVE_BULBS = 8U; // Max number of active bulbs
-YBulb *bulbs[MAX_BULBS] = {nullptr,}; // List of all known bulbs
-uint8_t nbulbs = 0;                 // Size of the list (<= MAX_BULBS)
-YBulb *abulbs[MAX_ACTIVE_BULBS] = {nullptr,}; // Pointers to the bulbs in use
-uint8_t nabulbs = 0;                // Size of the list (<= MAX_ACTIVE_BULBS)
+LinkedList<YBulb *> bulbs;          // List of known bulbs
+uint8_t nabulbs = 0;                // Number of active bulbs
 
 // Button handler
 void handleButtonEvent(AceButton* /* button */, uint8_t eventType, uint8_t /* buttonState */) {
@@ -152,7 +152,7 @@ void yl_discover(void) {
       if (len > 0) {
         discovery_reply[len] = 0;
 
-        YBulb *bulb = nullptr;
+        YBulb *new_bulb = nullptr;
         char *line_ctx, *host = nullptr, *port = nullptr;
         char *token = strtok_r(discovery_reply, "\r\n", &line_ctx);
         while (token) {
@@ -168,41 +168,41 @@ void yl_discover(void) {
             token = strtok(nullptr, " ");
 
             // Check if we already have this bulb in the list
-            bool bulb_exists = false;
-            for (unsigned char i = 0; i < nbulbs; i++)
-              if (!strcmp(token, bulbs[i]->GetID())) {
-                bulb_exists = true;
-                bulb = bulbs[i];
+            for (uint8_t i = 0; i < bulbs.size(); i++) {
+              YBulb *bulb = bulbs.get(i);
+              if (!strcmp(token, bulb->GetID())) {
+                new_bulb = bulb;
                 break;
+              }
             }
-            if (bulb_exists)
+            if (new_bulb)
               Serial.println("Bulb already registered; ignoring");
             else {
 
               // Register
               host = strtok(hostport, ":");
               port = strtok(nullptr, ":");
-              if (nbulbs < MAX_BULBS && host && port) {
-                bulb = new YBulb(token, host, atoi(port));
-                bulbs[nbulbs++] = bulb;
-                Serial.printf("Registered bulb %s from %s\n", bulb->GetID(), bulb->GetIP());
+              if (host && port) {
+                new_bulb = new YBulb(token, host, atoi(port));
+                bulbs.add(new_bulb);
+                Serial.printf("Registered bulb %s from %s\n", new_bulb->GetID(), new_bulb->GetIP());
               } else
-                Serial.println("Reached supported bulbs limit; ignoring 1 bulb");
+                Serial.println("Bad address; ignoring 1 bulb");
             }
           } else if (!strncmp(token, "model: ", 7)) {
-            if (strtok(token, " ") && bulb) {
-              bulb->SetModel(strtok(nullptr, " "));
-              Serial.printf("Bulb model: %s\n", bulb->GetModel());
+            if (strtok(token, " ") && new_bulb) {
+              new_bulb->SetModel(strtok(nullptr, " "));
+              Serial.printf("Bulb model: %s\n", new_bulb->GetModel());
             }
           } else if (!strncmp(token, "name: ", 6)) {
-            if (strtok(token, " ") && bulb) {
-              bulb->SetName(strtok(nullptr, " "));
-              Serial.printf("Bulb name: %s\n", bulb->GetName());   // Currently, Yeelights always seem to return an empty name here :(
+            if (strtok(token, " ") && new_bulb) {
+              new_bulb->SetName(strtok(nullptr, " "));
+              Serial.printf("Bulb name: %s\n", new_bulb->GetName());   // Currently, Yeelights always seem to return an empty name here :(
             }
           } else if (!strncmp(token, "power: ", 7)) {
-            if (strtok(token, " ") && bulb) {
-              bulb->SetPower(strcmp(strtok(nullptr, " "), "off"));
-              Serial.printf("Bulb power: %s\n", bulb->GetPower() ? "on" : "off");
+            if (strtok(token, " ") && new_bulb) {
+              new_bulb->SetPower(strcmp(strtok(nullptr, " "), "off"));
+              Serial.printf("Bulb power: %s\n", new_bulb->GetPower() ? "on" : "off");
             }
           } 
           token = strtok_r(nullptr, "\r\n", &line_ctx);
@@ -211,25 +211,38 @@ void yl_discover(void) {
     }
     yield();  // The loop is lengthy; allow for background processing
   }
-  Serial.printf("Total bulbs discovered: %d\n", nbulbs);
+  Serial.printf("Total bulbs discovered: %d\n", bulbs.size());
 }
 
 // Yeelight bulb flip
 int yl_flip(void) {
   int ret = 0;
   if (nabulbs) {
-    for (unsigned char i = 0; i < nabulbs; i++)
-      if (abulbs[i]->Flip(client)) {
-        Serial.printf("Bulb connection to %s failed\n", abulbs[i]->GetIP());
-        ret = -2;
-        yield();        // Connection timeout is lenghty; allow for background processing (is this really needed?)
-      } else
-        Serial.printf("Bulb %d toggle sent\n", i + 1);
+    for (uint8_t i = 0; i < bulbs.size(); i++) {
+      YBulb *bulb = bulbs.get(i);
+      if (bulb->isActive()) {
+        if (bulb->Flip(client)) {
+          Serial.printf("Bulb connection to %s failed\n", bulb->GetIP());
+          ret = -2;
+          yield();        // Connection timeout is lenghty; allow for background processing (is this really needed?)
+        } else
+          Serial.printf("Bulb %d toggle sent\n", i + 1);
+      }
+    }
   } else {
     Serial.println("No linked bulbs found");
     ret = -1;
   }
   return ret;
+}
+
+// Return number of active bulbs
+uint8_t yl_nabulbs(void) {
+  uint8_t n = 0;
+  for (uint8_t i = 0; i < bulbs.size(); i++)
+    if (bulbs.get(i)->isActive())
+      n++;
+  return n;
 }
 
 // Web server configuration pages
@@ -243,16 +256,19 @@ void handleRoot() {
     if (nabulbs > 1)
       page += "s";
     page += ":</p><p><ul>";
-    for (unsigned char i = 0; i < nabulbs; i++) {
-      page += "<li>id(";
-      page += abulbs[i]->GetID();
-      page += "), ip(";
-      page += abulbs[i]->GetIP();
-      page += "), name(";
-      page += abulbs[i]->GetName();
-      page += "), model(";
-      page += abulbs[i]->GetModel();
-      page += ")</li>";
+    for (uint8_t i = 0; i < bulbs.size(); i++) {
+      YBulb *bulb = bulbs.get(i);
+      if (bulb->isActive()) {
+        page += "<li>id(";
+        page += bulb->GetID();
+        page += "), ip(";
+        page += bulb->GetIP();
+        page += "), name(";
+        page += bulb->GetName();
+        page += "), model(";
+        page += bulb->GetModel();
+        page += ")</li>";
+      }
     }
     page += "</ul></p>";
   } else
@@ -298,31 +314,29 @@ void handleConf() {
   server.send(200, "text/html", page);
   yl_discover();
   page = "<p>Found ";
-  page += nbulbs;
+  page += bulbs.size();
   page += " bulb";
-  if (nbulbs != 1)
+  if (bulbs.size() != 1)
     page += "s";
-  page +=". Select bulbs from the list below (";
-  page += MAX_ACTIVE_BULBS;
-  page += " max).</p>";
+  page +=". Select bulbs to link from the list below.</p>";
   page += "<form action=\"/save\"><p style=\"font-family: monospace;\">";
-  for (uint8_t i = 0; i < nbulbs; i++) {
+  for (uint8_t i = 0; i < bulbs.size(); i++) {
+    YBulb *bulb = bulbs.get(i);
     page += "<input type=\"checkbox\" name=\"bulb\" value=\"";
     page += i;
     page += "\"";
-    for (uint8_t j = 0; j < nabulbs; j++)
-      if (abulbs[j] == bulbs[i])
-        page += " checked";
+    if (bulb->isActive())
+      page += " checked";
     page += "/> ";
-    page += bulbs[i]->GetIP();
+    page += bulb->GetIP();
     page += " id(";
-    page += bulbs[i]->GetID();
+    page += bulb->GetID();
     page += ") name(";
-    page += bulbs[i]->GetName();
+    page += bulb->GetName();
     page += ") model(";
-    page += bulbs[i]->GetModel();
+    page += bulb->GetModel();
     page += ") power(";
-    page += bulbs[i]->GetPower() ? "<b>on</b>" : "off";
+    page += bulb->GetPower() ? "<b>on</b>" : "off";
     page += ")<br/>";
   }
   page += "</p><p><input type=\"submit\" value=\"Link\"/></p></form></body></html>";
@@ -338,42 +352,43 @@ void handleConf() {
 //     3: number of stored bulbs
 //  4-22: <selected bulb ID> (19 bytes, null-terminated)
 //      : ...
-const size_t USED_EEPROM_SIZE = 2 + 1 + 1 + (YL_ID_LENGTH + 1) * MAX_ACTIVE_BULBS;
 const uint8_t EEPROM_FORMAT_VERSION = 49U;  // The first version of the format stored 1 bulb id right after the marker. ID stars with ASCII '0' == 48
 void handleSave() {
 
-  EEPROM.begin(USED_EEPROM_SIZE);
   unsigned int nargs = server.args();
+  const size_t used_eeprom_size = 2 + 1 + 1 + (YL_ID_LENGTH + 1) * nargs;   // TODO: maybe put some constraint on nargs (externally provided parameter)
+  EEPROM.begin(used_eeprom_size);
   unsigned int eeprom_addr = 4;
 
+  for (uint8_t i = 0; i < bulbs.size(); i++)
+    bulbs.get(i)->Deactivate();
   nabulbs = 0;
-  memset(abulbs, 0, sizeof(abulbs));
+
   if(nargs) {
-    if (nargs <= MAX_ACTIVE_BULBS) {
-      for(unsigned int i = 0; i < nargs; i++) {
-        unsigned char n = server.arg(i).c_str()[0] - '0';
-        if (n < MAX_ACTIVE_BULBS && n < nbulbs && bulbs[n]) {
-          char bulbid_c[YL_ID_LENGTH + 1] = {0,};
-          strncpy(bulbid_c, bulbs[n]->GetID(), YL_ID_LENGTH);
-          EEPROM.put(eeprom_addr, bulbid_c);
-          eeprom_addr += sizeof(bulbid_c);
-          abulbs[nabulbs++] = bulbs[n];
-        } else
-          Serial.printf("Bulb #%d does not exist\n", n);
-      }
-
-      if (nabulbs) {
-
-        // Write the header
-        EEPROM.write(0, 'Y');
-        EEPROM.write(1, 'B');
-        EEPROM.write(2, EEPROM_FORMAT_VERSION);
-        EEPROM.write(3, nabulbs);
-        Serial.printf("%d bulb%s stored in EEPROM, using %u out of %u byte(s) allocated\n", nabulbs, nabulbs == 1 ? "" : "s", eeprom_addr, USED_EEPROM_SIZE);
+    for(unsigned int i = 0; i < nargs; i++) {
+      unsigned char n = server.arg(i).c_str()[0] - '0';
+      if (n < bulbs.size()) {
+        YBulb *bulb = bulbs.get(n);
+        char bulbid_c[YL_ID_LENGTH + 1] = {0,};
+        strncpy(bulbid_c, bulb->GetID(), YL_ID_LENGTH);
+        EEPROM.put(eeprom_addr, bulbid_c);
+        eeprom_addr += sizeof(bulbid_c);
+        bulb->Activate();
       } else
-        Serial.println("No bulbs were stored in EEPROM");
+        Serial.printf("Bulb #%d does not exist\n", n);
+    }
+
+    nabulbs = yl_nabulbs();
+    if (nabulbs) {
+
+      // Write the header
+      EEPROM.write(0, 'Y');
+      EEPROM.write(1, 'B');
+      EEPROM.write(2, EEPROM_FORMAT_VERSION);
+      EEPROM.write(3, nabulbs);
+      Serial.printf("%d bulb%s stored in EEPROM, using %u byte(s)\n", nabulbs, nabulbs == 1 ? "" : "s", eeprom_addr);
     } else
-      Serial.printf("Number of bulbs to store (%d) exceeds the supported limit of %d\n", nargs, MAX_ACTIVE_BULBS);
+      Serial.println("No bulbs were stored in EEPROM");
   } else {
 
     // Unlink all
@@ -480,23 +495,28 @@ void setup(void) {
   yl_discover();
 
   // Load settings from EEPROM
-  EEPROM.begin(USED_EEPROM_SIZE);
+  EEPROM.begin(4);
   if (EEPROM.read(0) == 'Y' && EEPROM.read(1) == 'B' && EEPROM.read(2) == EEPROM_FORMAT_VERSION) {
     char bulbid_c[YL_ID_LENGTH + 1] = {0,};
-    unsigned int eeprom_addr = 4;
     const uint8_t n = EEPROM.read(3);
     Serial.printf("Found %d bulb%s configuration in EEPROM\n", n, n == 1 ? "" : "s");
+    EEPROM.end();
+    EEPROM.begin(2 + 1 + 1 + (YL_ID_LENGTH + 1) * n);
+    unsigned int eeprom_addr = 4;
     for (uint8_t i = 0; i < n; i++) {
       EEPROM.get(eeprom_addr, bulbid_c);
       eeprom_addr += sizeof(bulbid_c);
 
-      for (uint8_t j = 0; j < nbulbs; j++)
-        if (!strcmp(bulbid_c, bulbs[j]->GetID())) {
-          abulbs[nabulbs++] = bulbs[j];
+      for (uint8_t j = 0; j < bulbs.size(); j++) {
+        YBulb *bulb = bulbs.get(j);
+        if (!strcmp(bulbid_c, bulb->GetID())) {
+          bulb->Activate();
           break;
+        }
       }
     }
 
+    nabulbs = yl_nabulbs();
     if (nabulbs == n)
       Serial.printf("Successfully linked to %d bulb%s\n", nabulbs, nabulbs == 1 ? "" : "s");
     else
@@ -535,7 +555,7 @@ void loop(void) {
     // 1 + 2 blinks - one of the bulbs did not respond
     // 2 blinks - button not linked to bulbs
     // 1 long blink - Wi-Fi disconnected
-    Serial.println("Button clicked");
+    Serial.println("Button pressed");
     if (WiFi.status() != WL_CONNECTED) {
 
       // No Wi-Fi
