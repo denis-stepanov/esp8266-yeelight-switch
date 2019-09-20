@@ -63,6 +63,9 @@ class YBulb {
     void Activate() { active = true; }
     void Deactivate() { active = false; }
     int Flip(WiFiClient&) const;
+    bool operator==(const char *id2) const {
+      return !strcmp(id, id2);
+    }
 };
 
 // To create a bulb, pass its ID and IP-address
@@ -170,7 +173,7 @@ void yl_discover(void) {
             // Check if we already have this bulb in the list
             for (uint8_t i = 0; i < bulbs.size(); i++) {
               YBulb *bulb = bulbs.get(i);
-              if (!strcmp(token, bulb->GetID())) {
+              if (*bulb == token) {
                 new_bulb = bulb;
                 break;
               }
@@ -509,7 +512,7 @@ void setup(void) {
 
       for (uint8_t j = 0; j < bulbs.size(); j++) {
         YBulb *bulb = bulbs.get(j);
-        if (!strcmp(bulbid_c, bulb->GetID())) {
+        if (*bulb == bulbid_c) {
           bulb->Activate();
           break;
         }
