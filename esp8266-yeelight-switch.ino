@@ -107,6 +107,8 @@ int YBulb::Flip(WiFiClient &wfc) const {
 
 // Global variables
 JLed led(BUILTINLED);
+const unsigned long BLINK_DELAY = 100UL;    // (ms)
+const unsigned long GLOW_DELAY = 1000UL;    // (ms)
 AceButton button(PUSHBUTTON);
 bool button_pressed = false;
 
@@ -471,16 +473,16 @@ void setup(void) {
   WiFi.begin();             // Connect using stored credentials
   Serial.print("Connecting to ");
   Serial.print(WiFi.SSID());
-  unsigned long time0 = millis(), time1 = time0;
-  led.Blink(100, 100).Forever().Update();
+  unsigned long time0 = millis(), time1 = time0, timedot = time0;
+  led.Breathe(GLOW_DELAY).Forever().Update();
   while (WiFi.status() != WL_CONNECTED && time1 - time0 < WIFI_CONNECT_TIMEOUT) {
-    delay(100);
-    Serial.print(".");
-
-    // Show connection progress with LED
+    yield();
     led.Update();
-
     time1 = millis();
+    if (time1 - timedot >= 100UL) {
+      Serial.print(".");
+      timedot = time1;
+    }
   }
   Serial.println("");
   led.Off().Update();
@@ -542,7 +544,6 @@ void setup(void) {
 }
 
 // Program loop
-const unsigned long BLINK_DELAY = 100UL;    // (ms)
 void loop(void) {
 
   // Check the button state
@@ -554,12 +555,12 @@ void loop(void) {
     // 1 blink  - light flip OK
     // 1 + 2 blinks - one of the bulbs did not respond
     // 2 blinks - button not linked to bulbs
-    // 1 long blink - Wi-Fi disconnected
+    // 1 glowing - Wi-Fi disconnected
     if (WiFi.status() != WL_CONNECTED) {
 
       // No Wi-Fi
       Serial.println("No Wi-Fi connection");
-      led.Blink(BLINK_DELAY * 10, BLINK_DELAY).Repeat(1);   // 1 long blink
+      led.Breathe(GLOW_DELAY).Repeat(1);            // 1 glowing
     } else {
       if (nabulbs) {
 
