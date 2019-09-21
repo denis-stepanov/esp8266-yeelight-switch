@@ -123,6 +123,8 @@ const uint16_t CONNECTION_TIMEOUT = 1000U;  // Bulb connection timeout (ms)
 LinkedList<YBulb *> bulbs;          // List of known bulbs
 uint8_t nabulbs = 0;                // Number of active bulbs
 
+const char *COMPILATION_TIMESTAMP PROGMEM = __DATE__ " " __TIME__;
+
 // Button handler
 void handleButtonEvent(AceButton* /* button */, uint8_t eventType, uint8_t /* buttonState */) {
   button_pressed = eventType == AceButton::kEventPressed;
@@ -297,6 +299,8 @@ void handleRoot() {
   page += APPNAME;
   page += "</a> v";
   page += APPVERSION;
+  page += ", built ";
+  page += COMPILATION_TIMESTAMP;
   page += "</small></p>";
   page += "</body></html>";
   server.send(200, "text/html", page);
