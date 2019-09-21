@@ -15,6 +15,7 @@
 #include <ESP8266WiFi.h>      // https://github.com/esp8266/Arduino
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
+#include <jled.h>             // https://github.com/jandelgado/jled
 #include <AceButton.h>        // https://github.com/bxparks/AceButton
 #include <LinkedList.h>       // https://github.com/ivanseidel/LinkedList
 
@@ -105,9 +106,9 @@ int YBulb::Flip(WiFiClient &wfc) const {
 }
 
 // Global variables
+JLed led(BUILTINLED);
 AceButton button(PUSHBUTTON);
 bool button_pressed = false;
-int builtinled_state = HIGH;
 
 WiFiClient client;                  // Client used to talk to a bulb
 WiFiUDP udp;                        // UDP socket used for discovery process
@@ -451,42 +452,38 @@ void setup(void) {
 
   // I/O
   pinMode(PUSHBUTTON, INPUT);
-  pinMode(BUILTINLED, OUTPUT);
-  digitalWrite(BUILTINLED, builtinled_state);
+  led.LowActive();
 
   // If the push button is pressed on boot, offer Wi-Fi configuration
   if (button.isPressedRaw()) {
     Serial.println("Push button pressed on boot; going to Wi-Fi Manager");
-    builtinled_state = LOW;
-    digitalWrite(BUILTINLED, builtinled_state);
+    led.On().Update();
 
     WiFiManager wifiManager;
     wifiManager.startConfigPortal(HOSTNAME, WIFICONFIGPASS);
   }
   button.setEventHandler(handleButtonEvent);
+  led.Off().Update();
 
   // Network
-  builtinled_state = HIGH;
-  digitalWrite(BUILTINLED, builtinled_state);
   WiFi.mode(WIFI_STA);      // Important to avoid starting with an access point
   WiFi.hostname(HOSTNAME);
   WiFi.begin();             // Connect using stored credentials
   Serial.print("Connecting to ");
   Serial.print(WiFi.SSID());
   unsigned long time0 = millis(), time1 = time0;
+  led.Blink(100, 100).Forever().Update();
   while (WiFi.status() != WL_CONNECTED && time1 - time0 < WIFI_CONNECT_TIMEOUT) {
     delay(100);
     Serial.print(".");
 
     // Show connection progress with LED
-    builtinled_state = builtinled_state == HIGH ? LOW : HIGH;
-    digitalWrite(BUILTINLED, builtinled_state);
+    led.Update();
 
     time1 = millis();
   }
   Serial.println("");
-  builtinled_state = HIGH;
-  digitalWrite(BUILTINLED, builtinled_state);
+  led.Off().Update();
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("Connected!");
     Serial.printf("IP address: %s, RSSI: %d dBm\n", WiFi.localIP().toString().c_str(), WiFi.RSSI());
@@ -563,43 +560,32 @@ void loop(void) {
 
       // No Wi-Fi
       Serial.println("No Wi-Fi connection");
-      digitalWrite(BUILTINLED, LOW);
-      delay(BLINK_DELAY * 10);          // Long blink. These delays take long time, but background processing would still work
-      digitalWrite(BUILTINLED, HIGH);
+      led.Blink(BLINK_DELAY * 10, BLINK_DELAY).Repeat(1);   // 1 long blink
     } else {
       if (nabulbs) {
 
-        digitalWrite(BUILTINLED, LOW);
-        delay(BLINK_DELAY);
-        digitalWrite(BUILTINLED, HIGH);
+        // Flipping may be blocking, so LED response might not be properly processed. Force serialization for a time being
+        led.On().Update();
+        delay(BLINK_DELAY);       // 1 blink
+        led.Off().Update();
 
         if (yl_flip()) {
 
           // Some bulbs did not respond
           // Because of connection timeout, the blinking will be 1 + pause + 2
-          for (uint8_t i = 0; i < 2; i++) {
-            delay(BLINK_DELAY * 2);
-            digitalWrite(BUILTINLED, LOW);
-            delay(BLINK_DELAY);
-            digitalWrite(BUILTINLED, HIGH);
-          }
+          led.Blink(BLINK_DELAY, BLINK_DELAY * 2).Repeat(2);  // 2 blinks
         }
       } else {
 
         // Button not linked
         Serial.println("Button not linked to bulbs");
-        digitalWrite(BUILTINLED, LOW);
-        delay(BLINK_DELAY);
-        digitalWrite(BUILTINLED, HIGH);
-        delay(BLINK_DELAY * 2);
-        digitalWrite(BUILTINLED, LOW);
-        delay(BLINK_DELAY);
-        digitalWrite(BUILTINLED, HIGH);
+        led.Blink(BLINK_DELAY, BLINK_DELAY * 2).Repeat(2);    // 2 blinks
       }
     }
   }
 
   // Background processing
+  led.Update();
   server.handleClient();
   MDNS.update();
 }
