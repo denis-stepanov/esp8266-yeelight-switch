@@ -546,16 +546,15 @@ const unsigned long BLINK_DELAY = 100UL;    // (ms)
 void loop(void) {
 
   // Check the button state
-  button.check();
   if (button_pressed) {
     button_pressed = false;
+    Serial.println("Button pressed");
 
     // LED diagnostics:
     // 1 blink  - light flip OK
     // 1 + 2 blinks - one of the bulbs did not respond
     // 2 blinks - button not linked to bulbs
     // 1 long blink - Wi-Fi disconnected
-    Serial.println("Button pressed");
     if (WiFi.status() != WL_CONNECTED) {
 
       // No Wi-Fi
@@ -585,6 +584,7 @@ void loop(void) {
   }
 
   // Background processing
+  button.check();
   led.Update();
   server.handleClient();
   MDNS.update();
