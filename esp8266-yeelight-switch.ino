@@ -564,17 +564,20 @@ void loop(void) {
     } else {
       if (nabulbs) {
 
-        // Flipping may be blocking, so LED response might not be properly processed. Force serialization for a time being
+        // Flipping may block, causing JLED-style blink not being properly processed. Hence, force sequential processing (first blink, then flip)
+        // To make JLED working smoothly in this case, an asynchronous WiFiClient.connect() method would be needed
+        // This is not included in ESP8266 Core (https://github.com/esp8266/Arduino/issues/922), but is available as a separate library (like ESPAsyncTCP)
+        // Since, for this project, it is a minor issue (flip being sent to bulbs with 100 ms delay), we stay with blocking connect()
         led.On().Update();
         delay(BLINK_DELAY);       // 1 blink
         led.Off().Update();
 
-        if (yl_flip()) {
+        if (yl_flip())
 
           // Some bulbs did not respond
           // Because of connection timeout, the blinking will be 1 + pause + 2
           led.Blink(BLINK_DELAY, BLINK_DELAY * 2).Repeat(2);  // 2 blinks
-        }
+
       } else {
 
         // Button not linked
