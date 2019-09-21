@@ -291,15 +291,13 @@ void handleRoot() {
   page += "), RSSI ";
   page += WiFi.RSSI();
   page += " dBm.</i></p>";
-  page += "<p><small>";
-  page += APPNAME;
-  page += " v";
-  page += APPVERSION;
-  page += ", <a href=\"";
+  page += "<p><small><a href=\"";
   page += APPURL;
   page += "\">";
-  page += APPURL;
-  page += "</a></small></p>";
+  page += APPNAME;
+  page += "</a> v";
+  page += APPVERSION;
+  page += "</small></p>";
   page += "</body></html>";
   server.send(200, "text/html", page);
 }
