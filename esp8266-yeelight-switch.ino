@@ -111,6 +111,7 @@ int YBulb::Flip(WiFiClient &wfc) const {
 // Logger class
 const char *LOGFILENAME = "/log.txt";
 const char *LOGFILENAME2 = "/log2.txt";
+const unsigned int LOGSLACK = 512U;    // Space reserved on file system for small log overruns (bytes)
 class Logger {
     File logFile;
     bool enabled;
@@ -130,7 +131,10 @@ Logger::Logger() {
   if (enabled) {
     FSInfo fsi;
     SPIFFS.info(fsi);
-    logSizeMax = fsi.totalBytes / 2;
+    if (fsi.totalBytes > LOGSLACK)
+      logSizeMax = (fsi.totalBytes - LOGSLACK) / 2;
+    else
+      enabled = false;
   }
 }
 
