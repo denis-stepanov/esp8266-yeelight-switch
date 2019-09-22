@@ -113,16 +113,15 @@ const char *LOGFILENAME = "/log.txt";
 const char *LOGFILENAME2 = "/log2.txt";
 const unsigned int LOGSLACK = 512U;    // Space reserved on file system for small log overruns (bytes)
 class Logger {
-    File logFile;
     bool enabled;
     size_t logSizeMax;
   public:
     Logger();
     ~Logger();
     bool isEnabled() const { return enabled; };
-    void writeln(const char *);
-    void writeln(const String &);
-    void rotate();
+    void writeln(const char *) const;
+    void writeln(const String &) const;
+    void rotate() const;
 };
 
 //// Initialize logger
@@ -133,8 +132,10 @@ Logger::Logger() {
     SPIFFS.info(fsi);
     if (fsi.totalBytes > LOGSLACK)
       logSizeMax = (fsi.totalBytes - LOGSLACK) / 2;
-    else
+    else {
       enabled = false;
+      logSizeMax = 0;
+    }
   }
 }
 
@@ -144,24 +145,24 @@ Logger::~Logger() {
 }
 
 //// Write a line to a log
-void Logger::writeln(const char *line) {
+void Logger::writeln(const char *line) const {
   writeln((String)line);
 }
 
 //// Write a line to a log
-void Logger::writeln(const String &line) {
+void Logger::writeln(const String &line) const {
   if (enabled) {
     const String timestamp = "--:--:-- --/--/---- "; // TODO NTP
-    logFile = SPIFFS.open(LOGFILENAME, "a");
+    File logFile = SPIFFS.open(LOGFILENAME, "a");
     logFile.println(timestamp + line);
     logFile.close();
   }
 }
 
 //// Check log size and rotate if needed
-void Logger::rotate() {
+void Logger::rotate() const {
   if (enabled) {
-    logFile = SPIFFS.open(LOGFILENAME, "r");
+    File logFile = SPIFFS.open(LOGFILENAME, "r");
     const uint32_t fsize = logFile.size();
     logFile.close();
     if (fsize >= logSizeMax) {
