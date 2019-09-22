@@ -2,6 +2,8 @@
  * Developed & tested with a Witty Cloud Development board
  * (c) DNS 2018-2019
  *
+ * To make logging work, set on compile: Flash Size: 4M (1M SPIFFS)
+ *
  * Usage:
  * 0) review the configuration settings below; compile and flash your ESP8266
  * 1) boot with the push button pressed, connect your computer to the Wi-Fi network "ybutton1", enter and save your network credentials
@@ -9,6 +11,7 @@
  * 3) use the push button to control your bulb
  */
 
+#include <FS.h>
 #include <WiFiUdp.h>
 #include <WiFiManager.h>      // https://github.com/tzapu/WiFiManager
 #include <EEPROM.h>
@@ -105,6 +108,66 @@ int YBulb::Flip(WiFiClient &wfc) const {
     return -1;
 }
 
+// Logger class
+const char *LOGFILENAME = "/log.txt";
+const char *LOGFILENAME2 = "/log2.txt";
+class Logger {
+    File logFile;
+    bool enabled;
+    size_t logSizeMax;
+  public:
+    Logger();
+    ~Logger();
+    bool isEnabled() const { return enabled; };
+    void writeln(const char *);
+    void writeln(const String &);
+    void rotate();
+};
+
+//// Initialize logger
+Logger::Logger() {
+  enabled = SPIFFS.begin();
+  if (enabled) {
+    FSInfo fsi;
+    SPIFFS.info(fsi);
+    logSizeMax = fsi.totalBytes / 2;
+  }
+}
+
+//// Terminate logger
+Logger::~Logger() {
+  SPIFFS.end();
+}
+
+//// Write a line to a log
+void Logger::writeln(const char *line) {
+  writeln((String)line);
+}
+
+//// Write a line to a log
+void Logger::writeln(const String &line) {
+  if (enabled) {
+    const String timestamp = "--:--:-- --/--/---- "; // TODO NTP
+    logFile = SPIFFS.open(LOGFILENAME, "a");
+    logFile.println(timestamp + line);
+    logFile.close();
+  }
+}
+
+//// Check log size and rotate if needed
+void Logger::rotate() {
+  if (enabled) {
+    logFile = SPIFFS.open(LOGFILENAME, "r");
+    const uint32_t fsize = logFile.size();
+    logFile.close();
+    if (fsize >= logSizeMax) {
+      Serial.printf("Max log size (%u) reached, rotating...\n", logSizeMax);
+      SPIFFS.remove(LOGFILENAME2);          // Rename will fail if file exists
+      SPIFFS.rename(LOGFILENAME, LOGFILENAME2);
+    }
+  }
+}
+
 // Global variables
 JLed led(BUILTINLED);
 const unsigned long BLINK_DELAY = 100UL;    // (ms)
@@ -122,6 +185,8 @@ const uint16_t CONNECTION_TIMEOUT = 1000U;  // Bulb connection timeout (ms)
 
 LinkedList<YBulb *> bulbs;          // List of known bulbs
 uint8_t nabulbs = 0;                // Number of active bulbs
+
+Logger logger;
 
 const char *COMPILATION_TIMESTAMP PROGMEM = __DATE__ " " __TIME__;
 
@@ -284,6 +349,7 @@ void handleRoot() {
   page += "<p>[<a href=\"conf\">Change</a>]";
   if (nabulbs)
     page += " [<a href=\"flip\">Flip</a>]";
+  page += " [<a href=\"log\">Log</a>]";
   page += "</p><hr/><p><i>Connected to network ";
   page += WiFi.SSID();
   page += ", hostname ";
@@ -299,7 +365,7 @@ void handleRoot() {
   page += APPNAME;
   page += "</a> v";
   page += APPVERSION;
-  page += ", built ";
+  page += " build ";
   page += COMPILATION_TIMESTAMP;
   page += "</small></p>";
   page += "</body></html>";
@@ -436,6 +502,7 @@ void handleSave() {
 // Bulb flip page. Accessing this page immediately flips the light
 void handleFlip() {
   yl_flip();
+  logger.writeln("Web page flip received");
 
   String page = "<html><head><title>";
   page += HOSTNAME;
@@ -446,9 +513,102 @@ void handleFlip() {
   server.send(200, "text/html", page);
 }
 
+// Display log
+const unsigned long LOG_PAGE_SIZE = 2048UL;  // (bytes)
+void handleLog() {
+  Serial.println("Displaying log");
+
+  // Parse query params
+  unsigned int logPage = 0;
+  String logFileName(LOGFILENAME);
+  String logFileParam;
+  for (int i = 0; i < server.args(); i++) {
+    String argname = server.argName(i);
+    if (argname == "p")
+      logPage = String(server.arg(i)).toInt();
+    else {
+      if (argname == "r") {
+        logFileName = LOGFILENAME2;
+        logFileParam = "r=1&";
+      }
+    }
+  }
+
+  String page = "<html><head><title>";
+  page += HOSTNAME;
+  page += " event log</title></head><body><h3>Yeelight Button Event Log</h3>[<a href=\"/\">home</a>] ";
+  if (logger.isEnabled()) {
+    File logFile = SPIFFS.open(logFileName, "r");
+    if (!logFile)
+      page += "<span><br/>File opening error";
+    else {
+      const uint32_t fsize = logFile.size();
+
+      // Print pagination buttons
+      if (fsize > (logPage + 1) * LOG_PAGE_SIZE) {
+        page += "[<a href=\"/log?";
+        page += logFileParam;
+        page += "p=";
+        page += logPage + 1;
+        page += "\">&lt;&lt;</a>]\n";
+      } else {
+        if (logFileName == LOGFILENAME && SPIFFS.exists(LOGFILENAME2))
+          page += "[<a href=\"/log?r=1\">&lt;&lt;</a>]\n";
+        else
+          page += "[&lt;&lt;]\n";
+      }
+      if (logPage) {
+        page += "[<a href=\"/log?";
+        page += logFileParam;
+        page += "p=";
+        page += logPage - 1;
+        page += "\">&gt;&gt;</a>]\n";
+      } else {
+        if (logFileName == LOGFILENAME2 && SPIFFS.exists(LOGFILENAME)) {
+          File logFileNext = SPIFFS.open(LOGFILENAME, "r");
+          const unsigned int logPageNext = logFileNext.size() / LOG_PAGE_SIZE;
+          logFileNext.close();
+          page += "[<a href=\"/log?p=";
+          page += logPageNext;
+          page += "\">&gt;&gt;</a>]\n";
+        } else
+          page += "[&gt;&gt;]\n";
+      }
+
+      // Print log fragment
+      page += "<br/><span style=\"font-family: monospace;\">";
+
+      if (fsize > (logPage + 1) * LOG_PAGE_SIZE) {
+        logFile.seek(fsize - (logPage + 1) * LOG_PAGE_SIZE);
+        logFile.readStringUntil('\n');
+      }
+      String line;
+      while (logFile.available() && logFile.position() <= fsize - logPage * LOG_PAGE_SIZE) {
+        line = logFile.readStringUntil('\n');
+        page += "<br>";
+        page += line;   // already contains '\n'
+      }
+      logFile.close();
+    }
+
+    page += "</span>\n<hr/>\n";
+  } else
+    page += "<br/>Logging is disabled (missing or full file system)";
+  page += "</body></html>";
+  server.send(200, "text/html", page);
+}
+
 // Program setup
 const unsigned long WIFI_CONNECT_TIMEOUT = 20000UL;  // (ms)
 void setup(void) {
+
+  String msg = "booted: ";
+  msg += APPNAME;
+  msg += " v";
+  msg += APPVERSION;
+  msg += " build ";
+  msg += COMPILATION_TIMESTAMP;
+  logger.writeln(msg);
 
   // Serial line  
   Serial.begin(BAUDRATE);
@@ -461,6 +621,7 @@ void setup(void) {
   // If the push button is pressed on boot, offer Wi-Fi configuration
   if (button.isPressedRaw()) {
     Serial.println("Push button pressed on boot; going to Wi-Fi Manager");
+    logger.writeln("going to Wi-Fi Manager");
     led.On().Update();
 
     WiFiManager wifiManager;
@@ -490,10 +651,12 @@ void setup(void) {
   led.Off().Update();
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("Connected!");
+    logger.writeln("Wi-Fi connected on boot");
     Serial.printf("IP address: %s, RSSI: %d dBm\n", WiFi.localIP().toString().c_str(), WiFi.RSSI());
   } else {
     Serial.println("Connection timeout");
-  }
+    logger.writeln("Wi-Fi connection timeout on boot");
+ }
 
   // Run discovery
   yl_discover();
@@ -534,10 +697,11 @@ void setup(void) {
     Serial.printf("mDNS responder started; address=%s.local\n", HOSTNAME);
 
   // Kick off the web server
-  server.on("/", handleRoot);
+  server.on("/",     handleRoot);
   server.on("/conf", handleConf);
   server.on("/save", handleSave);
   server.on("/flip", handleFlip);
+  server.on("/log",  handleLog);
   server.begin();
   Serial.println("Web server started");
 
@@ -552,6 +716,7 @@ void loop(void) {
   if (button_pressed) {
     button_pressed = false;
     Serial.println("Button pressed");
+    logger.writeln("Button pressed");
 
     // LED diagnostics:
     // 1 blink  - light flip OK
@@ -594,4 +759,5 @@ void loop(void) {
   led.Update();
   server.handleClient();
   MDNS.update();
+//  logger.rotate();
 }
