@@ -108,20 +108,26 @@ int YBulb::Flip(WiFiClient &wfc) const {
     return -1;
 }
 
-// Logger class
+// Logger class. TODO: make a library out of this
 const char *LOGFILENAME = "/log.txt";
 const char *LOGFILENAME2 = "/log2.txt";
-const unsigned int LOGSLACK = 512U;    // Space reserved on file system for small log overruns (bytes)
+
+//// Logs tend to fill up the drive. SPIFFS manual recommends to always keep some space available,
+//// plus, logger will usually overshoot max log size by a few bytes. So reserve some free space
+const unsigned int LOGSLACK = 2048U;
+const size_t LOGSIZEMAX = 1048576U; // For large file systems, hard-limit log size. It is not likely that more than 2MiB of logs will be needed
 class Logger {
+    File logFile;
     bool enabled;
+    size_t logSize;
     size_t logSizeMax;
   public:
     Logger();
     ~Logger();
     bool isEnabled() const { return enabled; };
-    void writeln(const char *) const;
-    void writeln(const String &) const;
-    void rotate() const;
+    void writeln(const char *);
+    void writeln(const String &);
+    void rotate();
 };
 
 //// Initialize logger
@@ -131,44 +137,56 @@ Logger::Logger() {
     FSInfo fsi;
     SPIFFS.info(fsi);
     if (fsi.totalBytes > LOGSLACK)
-      logSizeMax = (fsi.totalBytes - LOGSLACK) / 2;
+      logSizeMax = (fsi.totalBytes - LOGSLACK) / 2 < LOGSIZEMAX ? (fsi.totalBytes - LOGSLACK) / 2 : LOGSIZEMAX;
     else {
       enabled = false;
+      logSize = 0;
       logSizeMax = 0;
     }
+    logFile = SPIFFS.open(LOGFILENAME, "a");
+    if (!logFile) {
+      SPIFFS.end();
+      enabled = false;
+      logSize = 0;
+      logSizeMax = 0;
+    } else
+      logSize = logFile.size();
   }
 }
 
 //// Terminate logger
 Logger::~Logger() {
+  logFile.close();
   SPIFFS.end();
 }
 
 //// Write a line to a log
-void Logger::writeln(const char *line) const {
+void Logger::writeln(const char *line) {
   writeln((String)line);
 }
 
 //// Write a line to a log
-void Logger::writeln(const String &line) const {
+void Logger::writeln(const String &line) {
   if (enabled) {
     const String timestamp = "--:--:-- --/--/---- "; // TODO NTP
-    File logFile = SPIFFS.open(LOGFILENAME, "a");
-    logFile.println(timestamp + line);
-    logFile.close();
+    String msg = timestamp + line;
+    logFile.println(msg);
+    logFile.flush();
+    logSize += msg.length();
   }
 }
 
 //// Check log size and rotate if needed
-void Logger::rotate() const {
-  if (enabled) {
-    File logFile = SPIFFS.open(LOGFILENAME, "r");
-    const uint32_t fsize = logFile.size();
+void Logger::rotate() {
+  if (enabled && logSize >= logSizeMax) {
+    Serial.printf("Max log size (%u) reached, rotating...\n", logSizeMax);
     logFile.close();
-    if (fsize >= logSizeMax) {
-      Serial.printf("Max log size (%u) reached, rotating...\n", logSizeMax);
-      SPIFFS.remove(LOGFILENAME2);          // Rename will fail if file exists
-      SPIFFS.rename(LOGFILENAME, LOGFILENAME2);
+    SPIFFS.remove(LOGFILENAME2);          // Rename will fail if file exists
+    SPIFFS.rename(LOGFILENAME, LOGFILENAME2);
+    logFile = SPIFFS.open(LOGFILENAME, "a");
+    if(!logFile) {
+      enabled = false;
+      Serial.println("Log rotation failed");
     }
   }
 }
@@ -764,5 +782,5 @@ void loop(void) {
   led.Update();
   server.handleClient();
   MDNS.update();
-//  logger.rotate();
+  logger.rotate();
 }
