@@ -37,8 +37,8 @@ const char *APPURL = "https://github.com/denis-stepanov/esp8266-yeelight-switch"
 const unsigned int BAUDRATE = 115200;     // Serial connection speed
 
 // Yeelight protocol; see https://www.yeelight.com/en_US/developer
-const char *YL_MSG_TOGGLE PROGMEM = "{\"id\":1,\"method\":\"toggle\",\"params\":[]}\r\n";
-const char *YL_MSG_DISCOVER PROGMEM = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1982\r\nMAN: \"ssdp:discover\"\r\nST: wifi_bulb";
+const char *YL_MSG_TOGGLE = "{\"id\":1,\"method\":\"toggle\",\"params\":[]}\r\n";
+const char *YL_MSG_DISCOVER = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1982\r\nMAN: \"ssdp:discover\"\r\nST: wifi_bulb";
 const unsigned int YL_ID_LENGTH = 18U;
 
 // Yeelight bulb object. TODO: make a library out of this
@@ -211,7 +211,7 @@ uint8_t nabulbs = 0;                // Number of active bulbs
 
 Logger logger;
 
-const char *COMPILATION_TIMESTAMP PROGMEM = __DATE__ " " __TIME__;
+const char *COMPILATION_TIMESTAMP = __DATE__ " " __TIME__;
 
 // Button handler
 void handleButtonEvent(AceButton* /* button */, uint8_t eventType, uint8_t /* buttonState */) {
