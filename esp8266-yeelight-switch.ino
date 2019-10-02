@@ -183,6 +183,7 @@ void Logger::rotate() {
     logFile.close();
     SPIFFS.remove(LOGFILENAME2);          // Rename will fail if file exists
     SPIFFS.rename(LOGFILENAME, LOGFILENAME2);
+    logSize = 0;
     logFile = SPIFFS.open(LOGFILENAME, "a");
     if(!logFile) {
       enabled = false;
