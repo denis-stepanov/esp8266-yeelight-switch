@@ -118,15 +118,14 @@ const unsigned int LOGSLACK = 2048U;
 const size_t LOGSIZEMAX = 1048576U; // For large file systems, hard-limit log size. It is not likely that more than 2MiB of logs will be needed
 class Logger {
     File logFile;
-    bool enabled;
     size_t logSize;
     size_t logSizeMax;
   public:
-    Logger(): enabled(false), logSize(0), logSizeMax(0) {};
+    Logger(): logSize(0), logSizeMax(0) {};
     ~Logger() { end(); };
     bool begin();
     bool end();
-    bool isEnabled() const { return enabled; };
+    bool isEnabled() const { return logSizeMax; };
     void writeln(const char *);
     void writeln(const String &);
     void rotate();
@@ -134,35 +133,31 @@ class Logger {
 
 //// Start logging activities
 bool Logger::begin() {
-  enabled = SPIFFS.begin();                 // TODO: make this work with SPIFFS already initialized
-  if (enabled) {
+  if (SPIFFS.begin()) {       // TODO: make this work with SPIFFS already initialized
     FSInfo fsi;
     SPIFFS.info(fsi);
     if (fsi.totalBytes > LOGSLACK)
       logSizeMax = (fsi.totalBytes - LOGSLACK) / 2 < LOGSIZEMAX ? (fsi.totalBytes - LOGSLACK) / 2 : LOGSIZEMAX;
     else {
       SPIFFS.end();
-      enabled = false;
       logSize = 0;
       logSizeMax = 0;
     }
     logFile = SPIFFS.open(LOGFILENAME, "a");
     if (!logFile) {
       SPIFFS.end();
-      enabled = false;
       logSize = 0;
       logSizeMax = 0;
     } else
       logSize = logFile.size();
   }
-  return enabled;
+  return logSizeMax;
 }
 
 //// Finish logging activities
 bool Logger::end() {
   logFile.close();
   SPIFFS.end();
-  enabled = false;
   logSize = 0;
   logSizeMax = 0;
   return true;
@@ -175,7 +170,7 @@ void Logger::writeln(const char *line) {
 
 //// Write a line to a log
 void Logger::writeln(const String &line) {
-  if (enabled) {
+  if (logSizeMax) {
     const String timestamp = "--:--:-- --/--/---- "; // TODO NTP
     String msg = timestamp + line;
     logFile.println(msg);
@@ -186,7 +181,7 @@ void Logger::writeln(const String &line) {
 
 //// Check log size and rotate if needed
 void Logger::rotate() {
-  if (enabled && logSize >= logSizeMax) {
+  if (logSize > logSizeMax) {
     Serial.printf("Max log size (%u) reached, rotating...\n", logSizeMax);
     logFile.close();
     SPIFFS.remove(LOGFILENAME2);          // Rename will fail if file exists
@@ -194,8 +189,8 @@ void Logger::rotate() {
     logSize = 0;
     logFile = SPIFFS.open(LOGFILENAME, "a");
     if(!logFile) {
-      enabled = false;
-      Serial.println("Log rotation failed");
+      end();
+      Serial.println("Log rotation failed; disabling logging");
     }
   }
 }
