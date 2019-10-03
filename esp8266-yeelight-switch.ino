@@ -122,23 +122,26 @@ class Logger {
     size_t logSize;
     size_t logSizeMax;
   public:
-    Logger();
-    ~Logger();
+    Logger(): enabled(false), logSize(0), logSizeMax(0) {};
+    ~Logger() { end(); };
+    bool begin();
+    bool end();
     bool isEnabled() const { return enabled; };
     void writeln(const char *);
     void writeln(const String &);
     void rotate();
 };
 
-//// Initialize logger
-Logger::Logger() {
-  enabled = SPIFFS.begin();
+//// Start logging activities
+bool Logger::begin() {
+  enabled = SPIFFS.begin();                 // TODO: make this work with SPIFFS already initialized
   if (enabled) {
     FSInfo fsi;
     SPIFFS.info(fsi);
     if (fsi.totalBytes > LOGSLACK)
       logSizeMax = (fsi.totalBytes - LOGSLACK) / 2 < LOGSIZEMAX ? (fsi.totalBytes - LOGSLACK) / 2 : LOGSIZEMAX;
     else {
+      SPIFFS.end();
       enabled = false;
       logSize = 0;
       logSizeMax = 0;
@@ -152,12 +155,17 @@ Logger::Logger() {
     } else
       logSize = logFile.size();
   }
+  return enabled;
 }
 
-//// Terminate logger
-Logger::~Logger() {
+//// Finish logging activities
+bool Logger::end() {
   logFile.close();
   SPIFFS.end();
+  enabled = false;
+  logSize = 0;
+  logSizeMax = 0;
+  return true;
 }
 
 //// Write a line to a log
@@ -210,7 +218,7 @@ const uint16_t CONNECTION_TIMEOUT = 1000U;  // Bulb connection timeout (ms)
 LinkedList<YBulb *> bulbs;          // List of known bulbs
 uint8_t nabulbs = 0;                // Number of active bulbs
 
-Logger logger;
+Logger logger;                      // Event logger
 
 const char *COMPILATION_TIMESTAMP = __DATE__ " " __TIME__;
 
@@ -626,6 +634,7 @@ void handleLog() {
 const unsigned long WIFI_CONNECT_TIMEOUT = 20000UL;  // (ms)
 void setup(void) {
 
+  logger.begin();
   String msg = "booted: ";
   msg += APPNAME;
   msg += " v";
