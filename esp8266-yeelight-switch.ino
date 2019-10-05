@@ -112,6 +112,40 @@ int YBulb::Flip(WiFiClient &wfc) const {
     return -1;
 }
 
+// Return timestamp in gmag11/NtpClient style (hh:mm:ss dd/mm/yyyy")
+// Unfortunately, AceTime does not provide a function to return a DateTime string (printTo() is considered as a debugging option)
+String AceDateTimeString(ZonedDateTime &dt) {
+  String str;
+  if (dt.isError())
+    str = "--:--:-- --/--/----";
+  else {
+
+    // Unfortunately, String class cannot zero-pad
+    if (dt.hour() < 10)
+      str += "0";
+    str += dt.hour();
+    str += ":";
+    if (dt.minute() < 10)
+      str += "0";
+    str += dt.minute();
+    str += ":";
+    if (dt.second() < 10)
+      str += "0";
+    str += dt.second();
+    str += " ";
+    if (dt.day() < 10)
+      str += "0";
+    str += dt.day();
+    str += "/";
+    if (dt.month() < 10)
+      str += "0";
+    str += dt.month();
+    str += "/";
+    str += dt.year();
+  }
+  return str;
+}
+
 // Logger class. TODO: make a library out of this
 const char *LOGFILENAME = "/log.txt";
 const char *LOGFILENAME2 = "/log2.txt";
@@ -174,23 +208,12 @@ void Logger::writeln(const char *line) {
   writeln((String)line);
 }
 
-class PrintString : public Print, public String {
-  public:
-    virtual size_t write(uint8_t c) {
-      *this += (char)c;
-      return 1;
-    }
-};
-
 //// Write a line to a log
 void Logger::writeln(const String &line) {
   if (logSizeMax) {
-    PrintString msg;
-    if (clock && timeZone && clock->isInit()) {
-      auto dt = ZonedDateTime::forEpochSeconds(clock->getNow(), *timeZone);
-      dt.printTo(msg);
-    } else
-      msg += "____-__-__T__:__:__";
+    String msg;
+    ZonedDateTime dt = clock && timeZone ? ZonedDateTime::forEpochSeconds(clock->getNow(), *timeZone) : ZonedDateTime::forError();
+    msg += AceDateTimeString(dt);
     msg += " ";
     msg += line;
     logFile.println(msg);
