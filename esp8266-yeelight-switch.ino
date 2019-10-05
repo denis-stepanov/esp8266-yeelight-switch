@@ -20,21 +20,25 @@
 #include <ESP8266mDNS.h>
 #include <jled.h>             // https://github.com/jandelgado/jled
 #include <AceButton.h>        // https://github.com/bxparks/AceButton
+#include <AceTime.h>          // https://github.com/bxparks/AceTime
 #include <LinkedList.h>       // https://github.com/ivanseidel/LinkedList
-
-using namespace ace_button;
 
 // Configuration
 const char *HOSTNAME = "ybutton1";        // <hostname>.local of the button in the local network. Also SSID of the temporary network for Wi-Fi configuration
 const char *WIFICONFIGPASS = "Yeelight";  // Password used to connect to the temporary network for Wi-Fi configuration
 const int PUSHBUTTON = D2;                // MCU pin connected to the main push button (D2 for Witty Cloud). The code below assumes the button is pulled high (HIGH == OFF)
 const int BUILTINLED = D4;                // MCU pin connected to the built-in LED (D4 for Witty Cloud). The code below assumes the LED is pulled high (HIGH == OFF)
+#define TIMEZONE Europe_Paris             // See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones (replace / with _)
 
 // Normally no need to change below this line
 const char *APPNAME = "ESP8266 Yeelight Switch";
 const char *APPVERSION = "2.0beta";
 const char *APPURL = "https://github.com/denis-stepanov/esp8266-yeelight-switch";
 const unsigned int BAUDRATE = 115200;     // Serial connection speed
+
+using namespace ace_button;
+using namespace ace_time;
+using namespace ace_time::clock;
 
 // Yeelight protocol; see https://www.yeelight.com/en_US/developer
 const char *YL_MSG_TOGGLE = "{\"id\":1,\"method\":\"toggle\",\"params\":[]}\r\n";
@@ -120,8 +124,10 @@ class Logger {
     File logFile;
     size_t logSize;
     size_t logSizeMax;
+    SystemClock *clock;
+    TimeZone *timeZone;
   public:
-    Logger(): logSize(0), logSizeMax(0) {};
+    Logger(SystemClock *clk = nullptr, TimeZone *tz = nullptr): logSize(0), logSizeMax(0), clock(clk), timeZone(tz) {};
     ~Logger() { end(); };
     bool begin();
     bool end();
@@ -168,11 +174,25 @@ void Logger::writeln(const char *line) {
   writeln((String)line);
 }
 
+class PrintString : public Print, public String {
+  public:
+    virtual size_t write(uint8_t c) {
+      *this += (char)c;
+      return 1;
+    }
+};
+
 //// Write a line to a log
 void Logger::writeln(const String &line) {
   if (logSizeMax) {
-    const String timestamp = "--:--:-- --/--/---- "; // TODO NTP
-    String msg = timestamp + line;
+    PrintString msg;
+    if (clock && timeZone && clock->isInit()) {
+      auto dt = ZonedDateTime::forEpochSeconds(clock->getNow(), *timeZone);
+      dt.printTo(msg);
+    } else
+      msg += "____-__-__T__:__:__";
+    msg += " ";
+    msg += line;
     logFile.println(msg);
     logFile.flush();
     logSize += msg.length();
@@ -213,7 +233,14 @@ const uint16_t CONNECTION_TIMEOUT = 1000U;  // Bulb connection timeout (ms)
 LinkedList<YBulb *> bulbs;          // List of known bulbs
 uint8_t nabulbs = 0;                // Number of active bulbs
 
-Logger logger;                      // Event logger
+#define ACETIME_TZ_NX(tz) zonedb::kZone##tz
+#define ACETIME_TZ(tz) ACETIME_TZ_NX(tz)          // Preprocessor trick needed to expand the macro before concatenation
+BasicZoneProcessor zoneProcessor;
+TimeZone timeZone;
+NtpClock ntpClock;
+SystemClockLoop sysClock(&ntpClock, nullptr);
+
+Logger logger(&sysClock, &timeZone);              // Event logger
 
 const char *COMPILATION_TIMESTAMP = __DATE__ " " __TIME__;
 
@@ -684,7 +711,12 @@ void setup(void) {
   } else {
     Serial.println("Connection timeout");
     logger.writeln("Wi-Fi connection timeout on boot");
- }
+  }
+
+  // Setup clock
+  timeZone = TimeZone::forZoneInfo(&ACETIME_TZ(TIMEZONE), &zoneProcessor);
+  ntpClock.setup();
+  sysClock.setup();
 
   // Run discovery
   yl_discover();
@@ -764,7 +796,7 @@ void loop(void) {
         // This is not included in ESP8266 Core (https://github.com/esp8266/Arduino/issues/922), but is available as a separate library (like ESPAsyncTCP)
         // Since, for this project, it is a minor issue (flip being sent to bulbs with 100 ms delay), we stay with blocking connect()
         led.On().Update();
-        delay(BLINK_DELAY);       // 1 blink
+        delay(BLINK_DELAY);       // 1 blink. Note that using delay() inside loop() may skew sysClock, as per AceTime documentation
         led.Off().Update();
 
         if (yl_flip())
@@ -787,5 +819,6 @@ void loop(void) {
   led.Update();
   server.handleClient();
   MDNS.update();
+  sysClock.loop();
   logger.rotate();
 }
