@@ -262,6 +262,7 @@ BasicZoneProcessor zoneProcessor;
 TimeZone timeZone;
 NtpClock ntpClock;
 SystemClockLoop sysClock(&ntpClock, nullptr);
+bool sysClockIsInit = false;
 
 Logger logger(&sysClock, &timeZone);              // Event logger
 
@@ -835,6 +836,13 @@ void loop(void) {
         led.Blink(BLINK_DELAY, BLINK_DELAY * 2).Repeat(2);    // 2 blinks
       }
     }
+  }
+
+  // Report initial NTP synchronization event
+  if (sysClockIsInit != sysClock.isInit()) {
+    sysClockIsInit = sysClock.isInit();
+    if (sysClockIsInit)
+      logger.writeln("System clock synchronized with NTP");
   }
 
   // Background processing
