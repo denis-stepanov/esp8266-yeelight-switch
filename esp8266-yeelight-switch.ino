@@ -260,7 +260,7 @@ uint8_t nabulbs = 0;                // Number of active bulbs
 #define ACETIME_TZ(tz) ACETIME_TZ_NX(tz)          // Preprocessor trick needed to expand the macro before concatenation
 BasicZoneProcessor zoneProcessor;
 TimeZone timeZone;
-NtpClock ntpClock;
+NtpClock ntpClock("pool.ntp.org");  // Somehow, the default pool in AceTime is USA; so reset it
 SystemClockLoop sysClock(&ntpClock, nullptr);
 bool sysClockIsInit = false;
 
