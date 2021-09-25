@@ -32,7 +32,7 @@ const int BUILTINLED = D4;                // MCU pin connected to the built-in L
 
 // Normally no need to change below this line
 const char *APPNAME = "ESP8266 Yeelight Switch";
-const char *APPVERSION = "2.0beta";
+const char *APPVERSION = "2.0.0-beta.1";
 const char *APPURL = "https://github.com/denis-stepanov/esp8266-yeelight-switch";
 const unsigned int BAUDRATE = 115200;     // Serial connection speed
 
