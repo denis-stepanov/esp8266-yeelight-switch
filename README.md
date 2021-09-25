@@ -39,7 +39,7 @@ Usage:
  1. Software:
     1. Arduino IDE, https://www.arduino.cc/en/main/software (version tested: 1.8.13);
     1. ESP8266 core for Arduino, https://github.com/esp8266/Arduino (version tested: 3.0.2);
-    1. WiFiManager library, https://github.com/tzapu/WiFiManager (version tested: 0.16.9);
+    1. WiFiManager library, https://github.com/tzapu/WiFiManager (version tested: 0.16.0);
     1. JLed library, https://github.com/jandelgado/jled (version tested: 4.7.0);
     1. AceButton library, https://github.com/bxparks/AceButton (version tested: 1.9.1);
     1. AceTime library(*), https://github.com/bxparks/AceTime (version tested: 1.7.4);
