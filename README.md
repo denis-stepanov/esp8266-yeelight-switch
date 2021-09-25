@@ -34,11 +34,22 @@ Usage:
  
  Prerequsites:
  1. Hardware:
-    1. ESP8266 (tested with ESP-12E Witty Cloud);
+    1. ESP8266 (tested with [ESP-12E Witty Cloud](https://www.instructables.com/Witty-Cloud-Module-Adapter-Board/), IDE setting: LOLIN(WEMOS) D1 R2 and mini);
     1. Push button connected to a GPIO and pulled high;
  1. Software:
-    1. Arduino IDE, https://www.arduino.cc/en/main/software (version tested: 1.8.5);
-    1. ESP8266 core for Arduino, https://github.com/esp8266/Arduino (version tested: 2.6.3);
-    1. WiFiManager library for Arduino, https://github.com/tzapu/WiFiManager (version tested: 0.15).
+    1. Arduino IDE, https://www.arduino.cc/en/main/software (version tested: 1.8.13);
+    1. ESP8266 core for Arduino, https://github.com/esp8266/Arduino (version tested: 3.0.2);
+    1. WiFiManager library, https://github.com/tzapu/WiFiManager (version tested: 0.16.9);
+    1. JLed library, https://github.com/jandelgado/jled (version tested: 4.7.0);
+    1. AceButton library, https://github.com/bxparks/AceButton (version tested: 1.9.1);
+    1. AceTime library(*), https://github.com/bxparks/AceTime (version tested: 1.7.4);
+    1. AceCommon library(*), https://github.com/bxparks/AceCommon (version tested: 1.4.6);
+    1. LinkedList library(*), https://github.com/ivanseidel/LinkedList (version tested: 1.3.2).
+
+(*) dependency will be removed in version 2.0.0.
  
  If you have an ESP with an onboard button, such as Witty Cloud Development board, the program can be used out of the box. Otherwise you need to wire the button and update the GPIO number in the source code.
+ 
+ 26 Sep 2021:
+ * version 2.0 is in prepapation, which will mostly concern refactoring and porting to [esp-ds-system](https://github.com/denis-stepanov/esp-ds-system) library;
+ * version 2.1 will include most wanted features (such as color / brightness control).
