@@ -1,6 +1,6 @@
 /* Yeelight Smart Switch App for ESP8266
  * Developed & tested with a Witty Cloud Development board
- * (c) DNS 2018-2019
+ * (c) DNS 2018-2021
  *
  * To make logging work, set on compile: Flash Size: 4M (1M SPIFFS)
  *
@@ -10,6 +10,8 @@
  * 2) in your network, go to http://ybutton1.local, run the Yeelight scan and link the switch to the bulb found
  * 3) use the push button to control your bulb
  */
+
+#include "MySystem.h"                            // System-level definitions
 
 #include <FS.h>
 #include <WiFiUdp.h>
