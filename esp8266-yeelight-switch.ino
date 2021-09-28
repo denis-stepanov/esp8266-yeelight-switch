@@ -36,7 +36,7 @@ const int BUILTINLED = D4;                // MCU pin connected to the built-in L
 using namespace ds;
 
 const char *System::app_name    PROGMEM = "ESP8266 Yeelight Switch";
-const char *System::app_version PROGMEM = "2.0.0-beta.1";
+const char *System::app_version PROGMEM = "2.0.0-beta.2";
 const char *System::app_url     PROGMEM = "https://github.com/denis-stepanov/esp8266-yeelight-switch";
 const unsigned int BAUDRATE = 115200;     // Serial connection speed
 
