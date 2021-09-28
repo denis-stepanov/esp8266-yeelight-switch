@@ -38,7 +38,6 @@ using namespace ds;
 const char *System::app_name    PROGMEM = "ESP8266 Yeelight Switch";
 const char *System::app_version PROGMEM = "2.0.0-beta.2";
 const char *System::app_url     PROGMEM = "https://github.com/denis-stepanov/esp8266-yeelight-switch";
-const unsigned int BAUDRATE = 115200;     // Serial connection speed
 
 using namespace ace_button;
 using namespace ace_time;
@@ -229,7 +228,7 @@ void Logger::writeln(const String &line) {
 //// Check log size and rotate if needed
 void Logger::rotate() {
   if (logSize > logSizeMax) {
-    Serial.printf("Max log size (%u) reached, rotating...\n", logSizeMax);
+    System::log->printf(TIMED("Max log size (%u) reached, rotating...\n"), logSizeMax);
     logFile.close();
     SPIFFS.remove(LOGFILENAME2);          // Rename will fail if file exists
     SPIFFS.rename(LOGFILENAME, LOGFILENAME2);
@@ -237,7 +236,7 @@ void Logger::rotate() {
     logFile = SPIFFS.open(LOGFILENAME, "a");
     if(!logFile) {
       end();
-      Serial.println("Log rotation failed; disabling logging");
+      System::log->printf(TIMED("Log rotation failed; disabling logging\n"));
     }
   }
 }
@@ -282,7 +281,7 @@ void yl_discover(void) {
   const uint16_t upnp_port_yeelight = 1982U;        // but the port is different from standard
 
   // Send broadcast message
-  Serial.println("Sending Yeelight discovery request...");
+  System::log->printf(TIMED("Sending Yeelight discovery request...\n"));
   udp.beginPacketMulticast(upnp_ip, upnp_port_yeelight, WiFi.localIP(), 32);
   udp.write(YL_MSG_DISCOVER, strlen(YL_MSG_DISCOVER));
   udp.endPacket();
@@ -300,7 +299,7 @@ void yl_discover(void) {
       break; 
     int len = udp.parsePacket();
     if (len > 0) {
-      Serial.printf("Received %d bytes from %s, port %d\n", len, udp.remoteIP().toString().c_str(), udp.remotePort());
+      System::log->printf(TIMED("Received %d bytes from %s, port %d\n"), len, udp.remoteIP().toString().c_str(), udp.remotePort());
       len = udp.read(discovery_reply, sizeof(discovery_reply));
       if (len > 0) {
         discovery_reply[len] = 0;
@@ -329,7 +328,7 @@ void yl_discover(void) {
               }
             }
             if (new_bulb)
-              Serial.println("Bulb already registered; ignoring");
+              System::log->printf(TIMED("Bulb already registered; ignoring\n"));
             else {
 
               // Register
@@ -338,24 +337,24 @@ void yl_discover(void) {
               if (host && port) {
                 new_bulb = new YBulb(token, host, atoi(port));
                 bulbs.add(new_bulb);
-                Serial.printf("Registered bulb %s from %s\n", new_bulb->GetID(), new_bulb->GetIP());
+                System::log->printf(TIMED("Registered bulb %s from %s\n"), new_bulb->GetID(), new_bulb->GetIP());
               } else
-                Serial.println("Bad address; ignoring 1 bulb");
+                System::log->printf(TIMED("Bad address; ignoring 1 bulb\n"));
             }
           } else if (!strncmp(token, "model: ", 7)) {
             if (strtok(token, " ") && new_bulb) {
               new_bulb->SetModel(strtok(nullptr, " "));
-              Serial.printf("Bulb model: %s\n", new_bulb->GetModel());
+              System::log->printf(TIMED("Bulb model: %s\n"), new_bulb->GetModel());
             }
           } else if (!strncmp(token, "name: ", 6)) {
             if (strtok(token, " ") && new_bulb) {
               new_bulb->SetName(strtok(nullptr, " "));
-              Serial.printf("Bulb name: %s\n", new_bulb->GetName());   // Currently, Yeelights always seem to return an empty name here :(
+              System::log->printf(TIMED("Bulb name: %s\n"), new_bulb->GetName());   // Currently, Yeelights always seem to return an empty name here :(
             }
           } else if (!strncmp(token, "power: ", 7)) {
             if (strtok(token, " ") && new_bulb) {
               new_bulb->SetPower(strcmp(strtok(nullptr, " "), "off"));
-              Serial.printf("Bulb power: %s\n", new_bulb->GetPower() ? "on" : "off");
+              System::log->printf(TIMED("Bulb power: %s\n"), new_bulb->GetPower() ? "on" : "off");
             }
           } 
           token = strtok_r(nullptr, "\r\n", &line_ctx);
@@ -364,7 +363,7 @@ void yl_discover(void) {
     }
     yield();  // The loop is lengthy; allow for background processing
   }
-  Serial.printf("Total bulbs discovered: %d\n", bulbs.size());
+  System::log->printf(TIMED("Total bulbs discovered: %d\n"), bulbs.size());
 }
 
 // Yeelight bulb flip
@@ -375,15 +374,15 @@ int yl_flip(void) {
       YBulb *bulb = bulbs.get(i);
       if (bulb->isActive()) {
         if (bulb->Flip(client)) {
-          Serial.printf("Bulb connection to %s failed\n", bulb->GetIP());
+          System::log->printf(TIMED("Bulb connection to %s failed\n"), bulb->GetIP());
           ret = -2;
           yield();        // Connection timeout is lenghty; allow for background processing (is this really needed?)
         } else
-          Serial.printf("Bulb %d toggle sent\n", i + 1);
+          System::log->printf(TIMED("Bulb %d toggle sent\n"), i + 1);
       }
     }
   } else {
-    Serial.println("No linked bulbs found");
+    System::log->printf(TIMED("No linked bulbs found\n"));
     ret = -1;
   }
   return ret;
@@ -529,7 +528,7 @@ void handleSave() {
         eeprom_addr += sizeof(bulbid_c);
         bulb->Activate();
       } else
-        Serial.printf("Bulb #%d does not exist\n", n);
+        System::log->printf(TIMED("Bulb #%d does not exist\n"), n);
     }
 
     nabulbs = yl_nabulbs();
@@ -540,16 +539,16 @@ void handleSave() {
       EEPROM.write(1, 'B');
       EEPROM.write(2, EEPROM_FORMAT_VERSION);
       EEPROM.write(3, nabulbs);
-      Serial.printf("%d bulb%s stored in EEPROM, using %u byte(s)\n", nabulbs, nabulbs == 1 ? "" : "s", eeprom_addr);
+      System::log->printf(TIMED("%d bulb%s stored in EEPROM, using %u byte(s)\n"), nabulbs, nabulbs == 1 ? "" : "s", eeprom_addr);
     } else
-      Serial.println("No bulbs were stored in EEPROM");
+      System::log->printf(TIMED("No bulbs were stored in EEPROM\n"));
   } else {
 
     // Unlink all
 
     // Overwriting the EEPROM marker will effectively cause forgetting the settings
     EEPROM.write(0, 0);
-    Serial.println("Bulbs unlinked from the switch");
+    System::log->printf(TIMED("Bulbs unlinked from the switch"));
   }
 
   // TODO: check for errors?
@@ -596,7 +595,7 @@ void handleFlip() {
 // Display log
 const unsigned long LOG_PAGE_SIZE = 2048UL;  // (bytes)
 void handleLog() {
-  Serial.println("Displaying log");
+  System::log->printf(TIMED("Displaying log\n"));
 
   // Parse query params
   unsigned int logPage = 0;
@@ -681,6 +680,7 @@ void handleLog() {
 // Program setup
 const unsigned long WIFI_CONNECT_TIMEOUT = 20000UL;  // (ms)
 void setup(void) {
+  System::begin();
 
   logger.begin();
   String msg = "booted: ";
@@ -691,17 +691,13 @@ void setup(void) {
   msg += System::app_build;
   logger.writeln(msg);
 
-  // Serial line  
-  Serial.begin(BAUDRATE);
-  Serial.println("");
-
   // I/O
   pinMode(PUSHBUTTON, INPUT);
   led.LowActive();
 
   // If the push button is pressed on boot, offer Wi-Fi configuration
   if (button.isPressedRaw()) {
-    Serial.println("Push button pressed on boot; going to Wi-Fi Manager");
+    System::log->printf(TIMED("Push button pressed on boot; going to Wi-Fi Manager\n"));
     logger.writeln("going to Wi-Fi Manager");
     led.On().Update();
 
@@ -715,8 +711,8 @@ void setup(void) {
   WiFi.mode(WIFI_STA);      // Important to avoid starting with an access point
   WiFi.hostname(HOSTNAME);
   WiFi.begin();             // Connect using stored credentials
-  Serial.print("Connecting to ");
-  Serial.print(WiFi.SSID());
+  System::log->printf(TIMED("Connecting to "));
+  System::log->print(WiFi.SSID());
   unsigned long time0 = millis(), time1 = time0, timedot = time0;
   led.Breathe(GLOW_DELAY).Forever().Update();
   while (WiFi.status() != WL_CONNECTED && time1 - time0 < WIFI_CONNECT_TIMEOUT) {
@@ -724,18 +720,18 @@ void setup(void) {
     led.Update();
     time1 = millis();
     if (time1 - timedot >= 100UL) {
-      Serial.print(".");
+      System::log->print(".");
       timedot = time1;
     }
   }
-  Serial.println("");
+  System::log->println("");
   led.Off().Update();
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("Connected!");
+    System::log->printf(TIMED("Connected!\n"));
     logger.writeln("Wi-Fi connected on boot");
-    Serial.printf("IP address: %s, RSSI: %d dBm\n", WiFi.localIP().toString().c_str(), WiFi.RSSI());
+    System::log->printf(TIMED("IP address: %s, RSSI: %d dBm\n"), WiFi.localIP().toString().c_str(), WiFi.RSSI());
   } else {
-    Serial.println("Connection timeout");
+    System::log->printf(TIMED("Connection timeout\n"));
     logger.writeln("Wi-Fi connection timeout on boot");
   }
 
@@ -752,7 +748,7 @@ void setup(void) {
   if (EEPROM.read(0) == 'Y' && EEPROM.read(1) == 'B' && EEPROM.read(2) == EEPROM_FORMAT_VERSION) {
     char bulbid_c[YL_ID_LENGTH + 1] = {0,};
     const uint8_t n = EEPROM.read(3);
-    Serial.printf("Found %d bulb%s configuration in EEPROM\n", n, n == 1 ? "" : "s");
+    System::log->printf(TIMED("Found %d bulb%s configuration in EEPROM\n"), n, n == 1 ? "" : "s");
     EEPROM.end();
     EEPROM.begin(2 + 1 + 1 + (YL_ID_LENGTH + 1) * n);
     unsigned int eeprom_addr = 4;
@@ -771,16 +767,16 @@ void setup(void) {
 
     nabulbs = yl_nabulbs();
     if (nabulbs == n)
-      Serial.printf("Successfully linked to %d bulb%s\n", nabulbs, nabulbs == 1 ? "" : "s");
+      System::log->printf(TIMED("Successfully linked to %d bulb%s\n"), nabulbs, nabulbs == 1 ? "" : "s");
     else
-      Serial.printf("Linking completed with %d out of %d bulb%s skipped\n", n - nabulbs, n, n == 1 ? "" : "s");
+      System::log->printf(TIMED("Linking completed with %d out of %d bulb%s skipped\n"), n - nabulbs, n, n == 1 ? "" : "s");
   } else
-    Serial.println("No bulb configuration found in EEPROM; need to link bulbs manually");
+    System::log->printf(TIMED("No bulb configuration found in EEPROM; need to link bulbs manually\n"));
   EEPROM.end();
 
   // Kick off mDNS
   if (MDNS.begin(HOSTNAME))
-    Serial.printf("mDNS responder started; address=%s.local\n", HOSTNAME);
+    System::log->printf(TIMED("mDNS responder started; address=%s.local\n"), HOSTNAME);
 
   // Kick off the web server
   server.on("/",     handleRoot);
@@ -789,7 +785,7 @@ void setup(void) {
   server.on("/flip", handleFlip);
   server.on("/log",  handleLog);
   server.begin();
-  Serial.println("Web server started");
+  System::log->printf(TIMED("Web server started\n"));
 
   // Reduce connection timeout for inactive bulbs
   client.setTimeout(CONNECTION_TIMEOUT);
@@ -801,7 +797,7 @@ void loop(void) {
   // Check the button state
   if (button_pressed) {
     button_pressed = false;
-    Serial.println("Button pressed");
+    System::log->printf(TIMED("Button pressed\n"));
     logger.writeln("Button pressed");
 
     // LED diagnostics:
@@ -812,7 +808,7 @@ void loop(void) {
     if (WiFi.status() != WL_CONNECTED) {
 
       // No Wi-Fi
-      Serial.println("No Wi-Fi connection");
+      System::log->printf(TIMED("No Wi-Fi connection\n"));
       led.Breathe(GLOW_DELAY).Repeat(1);            // 1 glowing
     } else {
       if (nabulbs) {
@@ -834,7 +830,7 @@ void loop(void) {
       } else {
 
         // Button not linked
-        Serial.println("Button not linked to bulbs");
+        System::log->printf(TIMED("Button not linked to bulbs\n"));
         led.Blink(BLINK_DELAY, BLINK_DELAY * 2).Repeat(2);    // 2 blinks
       }
     }
@@ -848,6 +844,7 @@ void loop(void) {
   }
 
   // Background processing
+  System::update();
   button.check();
   led.Update();
   server.handleClient();
