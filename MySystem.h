@@ -3,7 +3,7 @@
 
 #ifndef _DS_SYSTEM_H_
 
-// #define DS_CAP_APP_ID            // Enable application identification
+#define DS_CAP_APP_ID            // Enable application identification
 // #define DS_CAP_APP_LOG           // Enable application log
 // #define DS_CAP_SYS_LED           // Enable builtin LED
 // #define DS_CAP_SYS_LOG           // Enable syslog

@@ -33,9 +33,11 @@ const int BUILTINLED = D4;                // MCU pin connected to the built-in L
 #define TIMEZONE Europe_Paris             // See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones (replace / with _)
 
 // Normally no need to change below this line
-const char *APPNAME = "ESP8266 Yeelight Switch";
-const char *APPVERSION = "2.0.0-beta.1";
-const char *APPURL = "https://github.com/denis-stepanov/esp8266-yeelight-switch";
+using namespace ds;
+
+const char *System::app_name    PROGMEM = "ESP8266 Yeelight Switch";
+const char *System::app_version PROGMEM = "2.0.0-beta.1";
+const char *System::app_url     PROGMEM = "https://github.com/denis-stepanov/esp8266-yeelight-switch";
 const unsigned int BAUDRATE = 115200;     // Serial connection speed
 
 using namespace ace_button;
@@ -268,8 +270,6 @@ bool sysClockIsInit = false;
 
 Logger logger(&sysClock, &timeZone);              // Event logger
 
-const char *COMPILATION_TIMESTAMP = __DATE__ " " __TIME__;
-
 // Button handler
 void handleButtonEvent(AceButton* /* button */, uint8_t eventType, uint8_t /* buttonState */) {
   button_pressed = eventType == AceButton::kEventPressed;
@@ -440,13 +440,13 @@ void handleRoot() {
   page += WiFi.RSSI();
   page += " dBm.</i></p>";
   page += "<p><small><a href=\"";
-  page += APPURL;
+  page += System::app_url;
   page += "\">";
-  page += APPNAME;
+  page += System::app_name;
   page += "</a> v";
-  page += APPVERSION;
+  page += System::app_version;
   page += " build ";
-  page += COMPILATION_TIMESTAMP;
+  page += System::app_build;
   page += "</small></p>";
   page += "</body></html>";
   server.send(200, "text/html", page);
@@ -684,11 +684,11 @@ void setup(void) {
 
   logger.begin();
   String msg = "booted: ";
-  msg += APPNAME;
+  msg += System::app_name;
   msg += " v";
-  msg += APPVERSION;
+  msg += System::app_version;
   msg += " build ";
-  msg += COMPILATION_TIMESTAMP;
+  msg += System::app_build;
   logger.writeln(msg);
 
   // Serial line  
