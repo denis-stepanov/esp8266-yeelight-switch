@@ -19,7 +19,7 @@ Current known limitations:
 
 Usage:
  1. review the configuration settings at the top of the program; compile and flash your ESP8266;
- 2. boot with the push button pressed, connect your computer to the Wi-Fi network "ybutton1", password "Yeelight", go to the captive portal, enter and save your Wi-Fi network credentials;
+ 2. boot with the push button pressed, connect your computer to the Wi-Fi network "ybutton1", password "42ybutto", go to the captive portal, enter and save your Wi-Fi network credentials;
  3. in your Wi-Fi network, go to http://ybutton1.local, run the Yeelight scan and link the switch to the bulb found;
  4. use the push button to control your bulb manually;
  5. access to http://ybutton1.local/flip to toggle the bulb from a script.
