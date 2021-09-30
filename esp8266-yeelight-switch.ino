@@ -15,9 +15,7 @@
 
 #include <FS.h>
 #include <WiFiUdp.h>
-#include <WiFiManager.h>      // https://github.com/tzapu/WiFiManager
 #include <EEPROM.h>
-#include <ESP8266WiFi.h>      // https://github.com/esp8266/Arduino
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <jled.h>             // https://github.com/jandelgado/jled
@@ -25,16 +23,15 @@
 #include <AceTime.h>          // https://github.com/bxparks/AceTime
 #include <LinkedList.h>       // https://github.com/ivanseidel/LinkedList
 
+using namespace ds;
+
 // Configuration
-const char *HOSTNAME = "ybutton1";        // <hostname>.local of the button in the local network. Also SSID of the temporary network for Wi-Fi configuration
-const char *WIFICONFIGPASS = "Yeelight";  // Password used to connect to the temporary network for Wi-Fi configuration
+const char *System::hostname PROGMEM = "ybutton1";   // <hostname>.local in the local network. Also SSID of the temporary network for Wi-Fi configuration
 const int PUSHBUTTON = D2;                // MCU pin connected to the main push button (D2 for Witty Cloud). The code below assumes the button is pulled high (HIGH == OFF)
 const int BUILTINLED = D4;                // MCU pin connected to the built-in LED (D4 for Witty Cloud). The code below assumes the LED is pulled high (HIGH == OFF)
 #define TIMEZONE Europe_Paris             // See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones (replace / with _)
 
 // Normally no need to change below this line
-using namespace ds;
-
 const char *System::app_name    PROGMEM = "ESP8266 Yeelight Switch";
 const char *System::app_version PROGMEM = "2.0.0-beta.2";
 const char *System::app_url     PROGMEM = "https://github.com/denis-stepanov/esp8266-yeelight-switch";
@@ -401,7 +398,7 @@ uint8_t yl_nabulbs(void) {
 // Root page. Show status
 void handleRoot() {
   String page = "<html><head><title>";
-  page += HOSTNAME;
+  page += System::hostname;
   page += "</title></head><body><h3>Yeelight Button</h3>";
   if (nabulbs) {
     page += "<p>Linked to the bulb";
@@ -430,14 +427,14 @@ void handleRoot() {
     page += " [<a href=\"flip\">Flip</a>]";
   page += " [<a href=\"log\">Log</a>]";
   page += "</p><hr/><p><i>Connected to network ";
-  page += WiFi.SSID();
+  page += System::getNetworkName();
   page += ", hostname ";
-  page += HOSTNAME;
+  page += System::hostname;
   page += ".local (";
-  page += WiFi.localIP().toString();
-  page += "), RSSI ";
-  page += WiFi.RSSI();
-  page += " dBm.</i></p>";
+  page += System::getLocalIPAddress();
+  page += "), ";
+  page += System::getNetworkDetails();
+  page += ".</i></p>";
   page += "<p><small><a href=\"";
   page += System::app_url;
   page += "\">";
@@ -454,11 +451,11 @@ void handleRoot() {
 // Bulb discovery page
 void handleConf() {
   String page = "<html><head><title>";
-  page += HOSTNAME;
+  page += System::hostname;
   page += " conf</title></head><body><h3>Yeelight Button Configuration</h3>";
   page += "<p>[<a href=\"/conf\">Rescan</a>] [<a href=\"/save\">Unlink</a>] [<a href=\"..\">Back</a>]</p>";
   page += "<p><i>Scanning ";
-  page += WiFi.SSID();
+  page += System::getNetworkName();
   page += " for Yeelight devices...</i></p>";
   page += "<p><i>Hint: turn all bulbs off, except the desired ones, in order to identify them easily.</i></p>";
 
@@ -556,7 +553,7 @@ void handleSave() {
   EEPROM.end();
 
   String page = "<html><head><title>";
-  page += HOSTNAME;
+  page += System::hostname;
   page += nabulbs || !nargs ? " saved" : " error";
   page += "</title></head><body><h3>Yeelight Button Configuration ";
   page += nabulbs || !nargs ?  "Saved" : " Error";
@@ -584,7 +581,7 @@ void handleFlip() {
   logger.writeln("Web page flip received");
 
   String page = "<html><head><title>";
-  page += HOSTNAME;
+  page += System::hostname;
   page += " flip</title></head><body><h3>Yeelight Button Flip</h3>";
   page += nabulbs ? "<p>Light flipped</p>" : "<p>No linked bulbs found</p>";
   page += "<p>[<a href=\"/flip\">Flip</a>] [<a href=\"..\">Back</a>]</p>";
@@ -614,7 +611,7 @@ void handleLog() {
   }
 
   String page = "<html><head><title>";
-  page += HOSTNAME;
+  page += System::hostname;
   page += " event log</title></head><body><h3>Yeelight Button Event Log</h3>[<a href=\"/\">home</a>] ";
   if (logger.isEnabled()) {
     File logFile = SPIFFS.open(logFileName, "r");
@@ -678,7 +675,6 @@ void handleLog() {
 }
 
 // Program setup
-const unsigned long WIFI_CONNECT_TIMEOUT = 20000UL;  // (ms)
 void setup(void) {
   System::begin();
 
@@ -700,40 +696,10 @@ void setup(void) {
     System::log->printf(TIMED("Push button pressed on boot; going to Wi-Fi Manager\n"));
     logger.writeln("going to Wi-Fi Manager");
     led.On().Update();
-
-    WiFiManager wifiManager;
-    wifiManager.startConfigPortal(HOSTNAME, WIFICONFIGPASS);
+    System::configureNetwork();
   }
   button.setEventHandler(handleButtonEvent);
   led.Off().Update();
-
-  // Network
-  WiFi.mode(WIFI_STA);      // Important to avoid starting with an access point
-  WiFi.hostname(HOSTNAME);
-  WiFi.begin();             // Connect using stored credentials
-  System::log->printf(TIMED("Connecting to "));
-  System::log->print(WiFi.SSID());
-  unsigned long time0 = millis(), time1 = time0, timedot = time0;
-  led.Breathe(GLOW_DELAY).Forever().Update();
-  while (WiFi.status() != WL_CONNECTED && time1 - time0 < WIFI_CONNECT_TIMEOUT) {
-    yield();
-    led.Update();
-    time1 = millis();
-    if (time1 - timedot >= 100UL) {
-      System::log->print(".");
-      timedot = time1;
-    }
-  }
-  System::log->println("");
-  led.Off().Update();
-  if (WiFi.status() == WL_CONNECTED) {
-    System::log->printf(TIMED("Connected!\n"));
-    logger.writeln("Wi-Fi connected on boot");
-    System::log->printf(TIMED("IP address: %s, RSSI: %d dBm\n"), WiFi.localIP().toString().c_str(), WiFi.RSSI());
-  } else {
-    System::log->printf(TIMED("Connection timeout\n"));
-    logger.writeln("Wi-Fi connection timeout on boot");
-  }
 
   // Setup clock
   timeZone = TimeZone::forZoneInfo(&ACETIME_TZ(TIMEZONE), &zoneProcessor);
@@ -775,8 +741,8 @@ void setup(void) {
   EEPROM.end();
 
   // Kick off mDNS
-  if (MDNS.begin(HOSTNAME))
-    System::log->printf(TIMED("mDNS responder started; address=%s.local\n"), HOSTNAME);
+  if (MDNS.begin(System::hostname))
+    System::log->printf(TIMED("mDNS responder started; address=%s.local\n"), System::hostname);
 
   // Kick off the web server
   server.on("/",     handleRoot);
@@ -805,7 +771,7 @@ void loop(void) {
     // 1 + 2 blinks - one of the bulbs did not respond
     // 2 blinks - button not linked to bulbs
     // 1 glowing - Wi-Fi disconnected
-    if (WiFi.status() != WL_CONNECTED) {
+    if (!System::networkIsConnected()) {
 
       // No Wi-Fi
       System::log->printf(TIMED("No Wi-Fi connection\n"));
