@@ -15,7 +15,7 @@
 // #define DS_CAP_SYS_FS            // Enable file system
 #define DS_CAP_SYS_NETWORK       // Enable networking
 #define DS_CAP_WIFIMANAGER       // Enable Wi-Fi configuration at runtime
-// #define DS_CAP_MDNS              // Enable mDNS
+#define DS_CAP_MDNS              // Enable mDNS
 // #define DS_CAP_WEBSERVER         // Enable web server
 // #define DS_CAP_BUTTON            // Enable button
 // #define DS_CAP_TIMERS            // Enable timers

@@ -740,10 +740,6 @@ void setup(void) {
     System::log->printf(TIMED("No bulb configuration found in EEPROM; need to link bulbs manually\n"));
   EEPROM.end();
 
-  // Kick off mDNS
-  if (MDNS.begin(System::hostname))
-    System::log->printf(TIMED("mDNS responder started; address=%s.local\n"), System::hostname);
-
   // Kick off the web server
   server.on("/",     handleRoot);
   server.on("/conf", handleConf);
@@ -814,7 +810,6 @@ void loop(void) {
   button.check();
   led.Update();
   server.handleClient();
-  MDNS.update();
   sysClock.loop();
   logger.rotate();
 }
