@@ -10,7 +10,7 @@
 #define DS_CAP_SYS_LOG_HW        // Enable syslog on hardware serial line
 // #define DS_CAP_SYS_RESET         // Enable software reset interface
 // #define DS_CAP_SYS_RTCMEM        // Enable RTC memory
-// #define DS_CAP_SYS_TIME          // Enable system time
+#define DS_CAP_SYS_TIME          // Enable system time
 // #define DS_CAP_SYS_UPTIME        // Enable system uptime counter
 // #define DS_CAP_SYS_FS            // Enable file system
 #define DS_CAP_SYS_NETWORK       // Enable networking
@@ -26,7 +26,7 @@
 // #define DS_CAP_WEB_TIMERS        // Enable timer configuration via web
 
 
-// #define DS_TIMEZONE TZ_Europe_Paris       // Timezone if system time is used
+#define DS_TIMEZONE TZ_Europe_Paris       // Timezone. Pick yours from https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h
 // #define DS_LATITUDE 51.483611             // Latitude if solar events are used
 // #define DS_LONGITUDE -0.005833            // Longitude if solar events are used
 // #define DS_FS_TYPE LittleFS               // "LittleFS" or "SPIFFS" (without quotes)

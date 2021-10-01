@@ -42,8 +42,6 @@ Usage:
     1. WiFiManager library, https://github.com/tzapu/WiFiManager (version tested: 0.16.0);
     1. JLed library, https://github.com/jandelgado/jled (version tested: 4.7.0);
     1. AceButton library, https://github.com/bxparks/AceButton (version tested: 1.9.1);
-    1. AceTime library(*), https://github.com/bxparks/AceTime (version tested: 1.7.4);
-    1. AceCommon library(*), https://github.com/bxparks/AceCommon (version tested: 1.4.6);
     1. LinkedList library(*), https://github.com/ivanseidel/LinkedList (version tested: 1.3.2).
 
 (*) dependency will be removed in version 2.0.0.

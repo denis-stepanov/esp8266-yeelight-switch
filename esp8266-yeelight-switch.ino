@@ -17,10 +17,8 @@
 #include <WiFiUdp.h>
 #include <EEPROM.h>
 #include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
 #include <jled.h>             // https://github.com/jandelgado/jled
 #include <AceButton.h>        // https://github.com/bxparks/AceButton
-#include <AceTime.h>          // https://github.com/bxparks/AceTime
 #include <LinkedList.h>       // https://github.com/ivanseidel/LinkedList
 
 using namespace ds;
@@ -29,7 +27,6 @@ using namespace ds;
 const char *System::hostname PROGMEM = "ybutton1";   // <hostname>.local in the local network. Also SSID of the temporary network for Wi-Fi configuration
 const int PUSHBUTTON = D2;                // MCU pin connected to the main push button (D2 for Witty Cloud). The code below assumes the button is pulled high (HIGH == OFF)
 const int BUILTINLED = D4;                // MCU pin connected to the built-in LED (D4 for Witty Cloud). The code below assumes the LED is pulled high (HIGH == OFF)
-#define TIMEZONE Europe_Paris             // See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones (replace / with _)
 
 // Normally no need to change below this line
 const char *System::app_name    PROGMEM = "ESP8266 Yeelight Switch";
@@ -37,8 +34,6 @@ const char *System::app_version PROGMEM = "2.0.0-beta.2";
 const char *System::app_url     PROGMEM = "https://github.com/denis-stepanov/esp8266-yeelight-switch";
 
 using namespace ace_button;
-using namespace ace_time;
-using namespace ace_time::clock;
 
 // Yeelight protocol; see https://www.yeelight.com/en_US/developer
 const char *YL_MSG_TOGGLE = "{\"id\":1,\"method\":\"toggle\",\"params\":[]}\r\n";
@@ -112,40 +107,6 @@ int YBulb::Flip(WiFiClient &wfc) const {
     return -1;
 }
 
-// Return timestamp in gmag11/NtpClient style (hh:mm:ss dd/mm/yyyy")
-// Unfortunately, AceTime does not provide a function to return a DateTime string (printTo() is considered as a debugging option)
-String AceDateTimeString(ZonedDateTime &dt) {
-  String str;
-  if (dt.isError())
-    str = "--:--:-- --/--/----";
-  else {
-
-    // Unfortunately, String class cannot zero-pad
-    if (dt.hour() < 10)
-      str += "0";
-    str += dt.hour();
-    str += ":";
-    if (dt.minute() < 10)
-      str += "0";
-    str += dt.minute();
-    str += ":";
-    if (dt.second() < 10)
-      str += "0";
-    str += dt.second();
-    str += " ";
-    if (dt.day() < 10)
-      str += "0";
-    str += dt.day();
-    str += "/";
-    if (dt.month() < 10)
-      str += "0";
-    str += dt.month();
-    str += "/";
-    str += dt.year();
-  }
-  return str;
-}
-
 // Logger class. TODO: make a library out of this
 const char *LOGFILENAME = "/log.txt";
 const char *LOGFILENAME2 = "/log2.txt";
@@ -158,10 +119,9 @@ class Logger {
     File logFile;
     size_t logSize;
     size_t logSizeMax;
-    SystemClock *clock;
-    TimeZone *timeZone;
+
   public:
-    Logger(SystemClock *clk = nullptr, TimeZone *tz = nullptr): logSize(0), logSizeMax(0), clock(clk), timeZone(tz) {};
+    Logger(): logSize(0), logSizeMax(0) {};
     ~Logger() { end(); };
     bool begin();
     bool end();
@@ -212,8 +172,7 @@ void Logger::writeln(const char *line) {
 void Logger::writeln(const String &line) {
   if (logSizeMax) {
     String msg;
-    ZonedDateTime dt = clock && timeZone ? ZonedDateTime::forEpochSeconds(clock->getNow(), *timeZone) : ZonedDateTime::forError();
-    msg += AceDateTimeString(dt);
+    msg += System::getTimeStr();
     msg += " ";
     msg += line;
     logFile.println(msg);
@@ -256,15 +215,7 @@ const uint16_t CONNECTION_TIMEOUT = 1000U;  // Bulb connection timeout (ms)
 LinkedList<YBulb *> bulbs;          // List of known bulbs
 uint8_t nabulbs = 0;                // Number of active bulbs
 
-#define ACETIME_TZ_NX(tz) zonedb::kZone##tz
-#define ACETIME_TZ(tz) ACETIME_TZ_NX(tz)          // Preprocessor trick needed to expand the macro before concatenation
-BasicZoneProcessor zoneProcessor;
-TimeZone timeZone;
-NtpClock ntpClock("pool.ntp.org");  // Somehow, the default pool in AceTime is USA; so reset it
-SystemClockLoop sysClock(&ntpClock, nullptr);
-bool sysClockIsInit = false;
-
-Logger logger(&sysClock, &timeZone);              // Event logger
+Logger logger;                      // Event logger
 
 // Button handler
 void handleButtonEvent(AceButton* /* button */, uint8_t eventType, uint8_t /* buttonState */) {
@@ -701,11 +652,6 @@ void setup(void) {
   button.setEventHandler(handleButtonEvent);
   led.Off().Update();
 
-  // Setup clock
-  timeZone = TimeZone::forZoneInfo(&ACETIME_TZ(TIMEZONE), &zoneProcessor);
-  ntpClock.setup();
-  sysClock.setup();
-
   // Run discovery
   yl_discover();
 
@@ -798,18 +744,10 @@ void loop(void) {
     }
   }
 
-  // Report initial NTP synchronization event
-  if (sysClockIsInit != sysClock.isInit()) {
-    sysClockIsInit = sysClock.isInit();
-    if (sysClockIsInit)
-      logger.writeln("System clock synchronized with NTP");
-  }
-
   // Background processing
   System::update();
   button.check();
   led.Update();
   server.handleClient();
-  sysClock.loop();
   logger.rotate();
 }
