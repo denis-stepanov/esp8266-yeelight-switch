@@ -13,10 +13,8 @@
 
 #include "MySystem.h"                            // System-level definitions
 
-#include <FS.h>
 #include <WiFiUdp.h>
 #include <EEPROM.h>
-#include <ESP8266WebServer.h>
 #include <jled.h>             // https://github.com/jandelgado/jled
 #include <AceButton.h>        // https://github.com/bxparks/AceButton
 #include <LinkedList.h>       // https://github.com/ivanseidel/LinkedList
@@ -38,38 +36,6 @@ using namespace ace_button;
 // Yeelight protocol; see https://www.yeelight.com/en_US/developer
 const char *YL_MSG_TOGGLE = "{\"id\":1,\"method\":\"toggle\",\"params\":[]}\r\n";
 const char *YL_MSG_DISCOVER = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1982\r\nMAN: \"ssdp:discover\"\r\nST: wifi_bulb";
-const unsigned int YL_ID_LENGTH = 18U;
-
-// Yeelight bulb object. TODO: make a library out of this
-class YBulb {
-    char id[24];
-    char ip[16];
-    uint16_t port;
-    char name[32];
-    char model[16];
-    bool power;
-    bool active;
-
-  public:
-    YBulb(const char *, const char *, const uint16_t);
-    ~YBulb(){};
-    const char *GetID() const { return id; }
-    const char *GetIP() const { return ip; }
-    uint16_t GetPort() const { return port; }
-    const char *GetName() const { return name; }
-    void SetName(const char *);
-    const char *GetModel() const { return model; }
-    void SetModel(const char *);
-    bool GetPower() const { return power; }
-    void SetPower(const bool ypower) { power = ypower; }
-    bool isActive() const { return active; }
-    void Activate() { active = true; }
-    void Deactivate() { active = false; }
-    int Flip(WiFiClient&) const;
-    bool operator==(const char *id2) const {
-      return !strcmp(id, id2);
-    }
-};
 
 // To create a bulb, pass its ID and IP-address
 YBulb::YBulb(const char *yid, const char *yip, const uint16_t yport = 55443) :
@@ -115,21 +81,6 @@ const char *LOGFILENAME2 = "/log2.txt";
 //// plus, logger will usually overshoot max log size by a few bytes. So reserve some free space
 const unsigned int LOGSLACK = 2048U;
 const size_t LOGSIZEMAX = 1048576U; // For large file systems, hard-limit log size. It is not likely that more than 2MiB of logs will be needed
-class Logger {
-    File logFile;
-    size_t logSize;
-    size_t logSizeMax;
-
-  public:
-    Logger(): logSize(0), logSizeMax(0) {};
-    ~Logger() { end(); };
-    bool begin();
-    bool end();
-    bool isEnabled() const { return logSizeMax; };
-    void writeln(const char *);
-    void writeln(const String &);
-    void rotate();
-};
 
 //// Start logging activities
 bool Logger::begin() {
@@ -206,7 +157,6 @@ bool button_pressed = false;
 
 WiFiClient client;                  // Client used to talk to a bulb
 WiFiUDP udp;                        // UDP socket used for discovery process
-ESP8266WebServer server;            // Switch configuration web server
 
 const unsigned int MAX_DISCOVERY_REPLY_SIZE = 512U; // With current bulbs, the reply is about 500 bytes
 char discovery_reply[MAX_DISCOVERY_REPLY_SIZE]; // Buffer to hold one discovery reply
@@ -216,6 +166,8 @@ LinkedList<YBulb *> bulbs;          // List of known bulbs
 uint8_t nabulbs = 0;                // Number of active bulbs
 
 Logger logger;                      // Event logger
+
+extern const uint8_t EEPROM_FORMAT_VERSION = 49;  // The first version of the format stored 1 bulb id right after the marker. ID stars with ASCII '0' == 48
 
 // Button handler
 void handleButtonEvent(AceButton* /* button */, uint8_t eventType, uint8_t /* buttonState */) {
@@ -345,286 +297,6 @@ uint8_t yl_nabulbs(void) {
   return n;
 }
 
-// Web server configuration pages
-// Root page. Show status
-void handleRoot() {
-  String page = "<html><head><title>";
-  page += System::hostname;
-  page += "</title></head><body><h3>Yeelight Button</h3>";
-  if (nabulbs) {
-    page += "<p>Linked to the bulb";
-    if (nabulbs > 1)
-      page += "s";
-    page += ":</p><p><ul>";
-    for (uint8_t i = 0; i < bulbs.size(); i++) {
-      YBulb *bulb = bulbs.get(i);
-      if (bulb->isActive()) {
-        page += "<li>id(";
-        page += bulb->GetID();
-        page += "), ip(";
-        page += bulb->GetIP();
-        page += "), name(";
-        page += bulb->GetName();
-        page += "), model(";
-        page += bulb->GetModel();
-        page += ")</li>";
-      }
-    }
-    page += "</ul></p>";
-  } else
-    page += "<p>Not linked to a bulb</p>";
-  page += "<p>[<a href=\"conf\">Change</a>]";
-  if (nabulbs)
-    page += " [<a href=\"flip\">Flip</a>]";
-  page += " [<a href=\"log\">Log</a>]";
-  page += "</p><hr/><p><i>Connected to network ";
-  page += System::getNetworkName();
-  page += ", hostname ";
-  page += System::hostname;
-  page += ".local (";
-  page += System::getLocalIPAddress();
-  page += "), ";
-  page += System::getNetworkDetails();
-  page += ".</i></p>";
-  page += "<p><small><a href=\"";
-  page += System::app_url;
-  page += "\">";
-  page += System::app_name;
-  page += "</a> v";
-  page += System::app_version;
-  page += " build ";
-  page += System::app_build;
-  page += "</small></p>";
-  page += "</body></html>";
-  server.send(200, "text/html", page);
-}
-
-// Bulb discovery page
-void handleConf() {
-  String page = "<html><head><title>";
-  page += System::hostname;
-  page += " conf</title></head><body><h3>Yeelight Button Configuration</h3>";
-  page += "<p>[<a href=\"/conf\">Rescan</a>] [<a href=\"/save\">Unlink</a>] [<a href=\"..\">Back</a>]</p>";
-  page += "<p><i>Scanning ";
-  page += System::getNetworkName();
-  page += " for Yeelight devices...</i></p>";
-  page += "<p><i>Hint: turn all bulbs off, except the desired ones, in order to identify them easily.</i></p>";
-
-  // Use chunked transfer to show scan in progress. Works in Chrome, not so well in Firefox
-  server.setContentLength(CONTENT_LENGTH_UNKNOWN); 
-  server.send(200, "text/html", page);
-  yl_discover();
-  page = "<p>Found ";
-  page += bulbs.size();
-  page += " bulb";
-  if (bulbs.size() != 1)
-    page += "s";
-  page +=". Select bulbs to link from the list below.</p>";
-  page += "<form action=\"/save\"><p style=\"font-family: monospace;\">";
-  for (uint8_t i = 0; i < bulbs.size(); i++) {
-    YBulb *bulb = bulbs.get(i);
-    page += "<input type=\"checkbox\" name=\"bulb\" value=\"";
-    page += i;
-    page += "\"";
-    if (bulb->isActive())
-      page += " checked";
-    page += "/> ";
-    page += bulb->GetIP();
-    page += " id(";
-    page += bulb->GetID();
-    page += ") name(";
-    page += bulb->GetName();
-    page += ") model(";
-    page += bulb->GetModel();
-    page += ") power(";
-    page += bulb->GetPower() ? "<b>on</b>" : "off";
-    page += ")<br/>";
-  }
-  page += "</p><p><input type=\"submit\" value=\"Link\"/></p></form></body></html>";
-  server.sendContent(page);
-  server.sendContent("");
-  server.client().stop();   // Terminate chunked transfer
-}
-
-// Configuration saving page
-// EEPROM format:
-//   0-1: 'YB' - Yeelight Bulb configuration marker
-//     2: format version. Increment each time the format changes
-//     3: number of stored bulbs
-//  4-22: <selected bulb ID> (19 bytes, null-terminated)
-//      : ...
-const uint8_t EEPROM_FORMAT_VERSION = 49U;  // The first version of the format stored 1 bulb id right after the marker. ID stars with ASCII '0' == 48
-void handleSave() {
-
-  unsigned int nargs = server.args();
-  const size_t used_eeprom_size = 2 + 1 + 1 + (YL_ID_LENGTH + 1) * nargs;   // TODO: maybe put some constraint on nargs (externally provided parameter)
-  EEPROM.begin(used_eeprom_size);
-  unsigned int eeprom_addr = 4;
-
-  for (uint8_t i = 0; i < bulbs.size(); i++)
-    bulbs.get(i)->Deactivate();
-  nabulbs = 0;
-
-  if(nargs) {
-    for(unsigned int i = 0; i < nargs; i++) {
-      unsigned char n = server.arg(i).c_str()[0] - '0';
-      if (n < bulbs.size()) {
-        YBulb *bulb = bulbs.get(n);
-        char bulbid_c[YL_ID_LENGTH + 1] = {0,};
-        strncpy(bulbid_c, bulb->GetID(), YL_ID_LENGTH);
-        EEPROM.put(eeprom_addr, bulbid_c);
-        eeprom_addr += sizeof(bulbid_c);
-        bulb->Activate();
-      } else
-        System::log->printf(TIMED("Bulb #%d does not exist\n"), n);
-    }
-
-    nabulbs = yl_nabulbs();
-    if (nabulbs) {
-
-      // Write the header
-      EEPROM.write(0, 'Y');
-      EEPROM.write(1, 'B');
-      EEPROM.write(2, EEPROM_FORMAT_VERSION);
-      EEPROM.write(3, nabulbs);
-      System::log->printf(TIMED("%d bulb%s stored in EEPROM, using %u byte(s)\n"), nabulbs, nabulbs == 1 ? "" : "s", eeprom_addr);
-    } else
-      System::log->printf(TIMED("No bulbs were stored in EEPROM\n"));
-  } else {
-
-    // Unlink all
-
-    // Overwriting the EEPROM marker will effectively cause forgetting the settings
-    EEPROM.write(0, 0);
-    System::log->printf(TIMED("Bulbs unlinked from the switch"));
-  }
-
-  // TODO: check for errors?
-  EEPROM.commit();
-  EEPROM.end();
-
-  String page = "<html><head><title>";
-  page += System::hostname;
-  page += nabulbs || !nargs ? " saved" : " error";
-  page += "</title></head><body><h3>Yeelight Button Configuration ";
-  page += nabulbs || !nargs ?  "Saved" : " Error";
-  page += "</h3>";
-  if (nargs) {
-    if (nabulbs) {
-      page += "<p>";
-      page += nabulbs;
-      page += " bulb";
-      if (nabulbs != 1)
-        page += "s";
-      page += " linked</p>";
-    } else
-      page += "<p>Too many bulbs passed</p>";
-  } else
-    page += "<p>Bulbs unlinked</p>";
-  page += "<p>[<a href=\"..\">Back</a>]</p>";
-  page += "</body></html>";
-  server.send(200, "text/html", page);
-}
-
-// Bulb flip page. Accessing this page immediately flips the light
-void handleFlip() {
-  yl_flip();
-  logger.writeln("Web page flip received");
-
-  String page = "<html><head><title>";
-  page += System::hostname;
-  page += " flip</title></head><body><h3>Yeelight Button Flip</h3>";
-  page += nabulbs ? "<p>Light flipped</p>" : "<p>No linked bulbs found</p>";
-  page += "<p>[<a href=\"/flip\">Flip</a>] [<a href=\"..\">Back</a>]</p>";
-  page += "</body></html>";
-  server.send(200, "text/html", page);
-}
-
-// Display log
-const unsigned long LOG_PAGE_SIZE = 2048UL;  // (bytes)
-void handleLog() {
-  System::log->printf(TIMED("Displaying log\n"));
-
-  // Parse query params
-  unsigned int logPage = 0;
-  String logFileName(LOGFILENAME);
-  String logFileParam;
-  for (int i = 0; i < server.args(); i++) {
-    String argname = server.argName(i);
-    if (argname == "p")
-      logPage = String(server.arg(i)).toInt();
-    else {
-      if (argname == "r") {
-        logFileName = LOGFILENAME2;
-        logFileParam = "r=1&";
-      }
-    }
-  }
-
-  String page = "<html><head><title>";
-  page += System::hostname;
-  page += " event log</title></head><body><h3>Yeelight Button Event Log</h3>[<a href=\"/\">home</a>] ";
-  if (logger.isEnabled()) {
-    File logFile = SPIFFS.open(logFileName, "r");
-    if (!logFile)
-      page += "<span><br/>File opening error";
-    else {
-      const uint32_t fsize = logFile.size();
-
-      // Print pagination buttons
-      if (fsize > (logPage + 1) * LOG_PAGE_SIZE) {
-        page += "[<a href=\"/log?";
-        page += logFileParam;
-        page += "p=";
-        page += logPage + 1;
-        page += "\">&lt;&lt;</a>]\n";
-      } else {
-        if (logFileName == LOGFILENAME && SPIFFS.exists(LOGFILENAME2))
-          page += "[<a href=\"/log?r=1\">&lt;&lt;</a>]\n";
-        else
-          page += "[&lt;&lt;]\n";
-      }
-      if (logPage) {
-        page += "[<a href=\"/log?";
-        page += logFileParam;
-        page += "p=";
-        page += logPage - 1;
-        page += "\">&gt;&gt;</a>]\n";
-      } else {
-        if (logFileName == LOGFILENAME2 && SPIFFS.exists(LOGFILENAME)) {
-          File logFileNext = SPIFFS.open(LOGFILENAME, "r");
-          const unsigned int logPageNext = logFileNext.size() / LOG_PAGE_SIZE;
-          logFileNext.close();
-          page += "[<a href=\"/log?p=";
-          page += logPageNext;
-          page += "\">&gt;&gt;</a>]\n";
-        } else
-          page += "[&gt;&gt;]\n";
-      }
-
-      // Print log fragment
-      page += "<br/><span style=\"font-family: monospace;\">";
-
-      if (fsize > (logPage + 1) * LOG_PAGE_SIZE) {
-        logFile.seek(fsize - (logPage + 1) * LOG_PAGE_SIZE);
-        logFile.readStringUntil('\n');
-      }
-      String line;
-      while (logFile.available() && logFile.position() <= fsize - logPage * LOG_PAGE_SIZE) {
-        line = logFile.readStringUntil('\n');
-        page += "<br>";
-        page += line;   // already contains '\n'
-      }
-      logFile.close();
-    }
-
-    page += "</span>\n<hr/>\n";
-  } else
-    page += "<br/>Logging is disabled (missing or full file system)";
-  page += "</body></html>";
-  server.send(200, "text/html", page);
-}
-
 // Program setup
 void setup(void) {
   System::begin();
@@ -686,15 +358,6 @@ void setup(void) {
     System::log->printf(TIMED("No bulb configuration found in EEPROM; need to link bulbs manually\n"));
   EEPROM.end();
 
-  // Kick off the web server
-  server.on("/",     handleRoot);
-  server.on("/conf", handleConf);
-  server.on("/save", handleSave);
-  server.on("/flip", handleFlip);
-  server.on("/log",  handleLog);
-  server.begin();
-  System::log->printf(TIMED("Web server started\n"));
-
   // Reduce connection timeout for inactive bulbs
   client.setTimeout(CONNECTION_TIMEOUT);
 }
@@ -748,6 +411,5 @@ void loop(void) {
   System::update();
   button.check();
   led.Update();
-  server.handleClient();
   logger.rotate();
 }

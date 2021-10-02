@@ -16,7 +16,7 @@
 #define DS_CAP_SYS_NETWORK       // Enable networking
 #define DS_CAP_WIFIMANAGER       // Enable Wi-Fi configuration at runtime
 #define DS_CAP_MDNS              // Enable mDNS
-// #define DS_CAP_WEBSERVER         // Enable web server
+#define DS_CAP_WEBSERVER         // Enable web server
 // #define DS_CAP_BUTTON            // Enable button
 // #define DS_CAP_TIMERS            // Enable timers
 // #define DS_CAP_TIMERS_ABS        // Enable timers from absolute time
@@ -33,6 +33,63 @@
 // #define DS_LED_VS_SERIAL_CHECKED_OK       // Define if both LED and Serial are used in your sketch in non-conflicting way
 // #define DS_UNSTABLE_SERIAL                // Define to skip small delay after syslog initialization, used to get reliable printout after program upload
 // #define BUTTON_BUILTIN 0                  // Define if your button is connected to GPIO other than 0
+
+// KEEP THIS TEMPORARILY HERE UNTIL FURTHER RESTRUCTURING
+
+#include <FS.h>
+#include <WiFiClient.h>
+
+// Yeelight bulb object. TODO: make a library out of this
+class YBulb {
+    char id[24];
+    char ip[16];
+    uint16_t port;
+    char name[32];
+    char model[16];
+    bool power;
+    bool active;
+
+  public:
+    YBulb(const char *, const char *, const uint16_t);
+    ~YBulb(){};
+    const char *GetID() const { return id; }
+    const char *GetIP() const { return ip; }
+    uint16_t GetPort() const { return port; }
+    const char *GetName() const { return name; }
+    void SetName(const char *);
+    const char *GetModel() const { return model; }
+    void SetModel(const char *);
+    bool GetPower() const { return power; }
+    void SetPower(const bool ypower) { power = ypower; }
+    bool isActive() const { return active; }
+    void Activate() { active = true; }
+    void Deactivate() { active = false; }
+    int Flip(WiFiClient&) const;
+    bool operator==(const char *id2) const {
+      return !strcmp(id, id2);
+    }
+};
+
+class Logger {
+    File logFile;
+    size_t logSize;
+    size_t logSizeMax;
+
+  public:
+    Logger(): logSize(0), logSizeMax(0) {};
+    ~Logger() { end(); };
+    bool begin();
+    bool end();
+    bool isEnabled() const { return logSizeMax; };
+    void writeln(const char *);
+    void writeln(const String &);
+    void rotate();
+};
+
+// Temporarily #define this, as with templated EEPROM.put() it does not work to define constant in one file and use it in another
+#define YL_ID_LENGTH 18U            // Length of Yeelight device ID (chars)
+
+// END OF TEMPORARY SECTION
 
 #include "System.h"         // DS-System global definitions
 

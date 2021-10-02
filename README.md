@@ -11,7 +11,8 @@ Program features:
 * Support for turning the bulb on or off via web interface, including a direct URL for toggle;
 * Storing of the user-selected light device in EEPROM (survives power off);
 * No hardcoded or entered bulb IP addresses;
-* Detailed diagnostics sent over serial interface.
+* Detailed diagnostics sent over serial interface;
+* "about" web page showing various run-time information about controller.
 
 Current known limitations:
 * The bulb has to be online when the switch boots, otherwise the switch will start unlinked;
