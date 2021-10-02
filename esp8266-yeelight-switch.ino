@@ -28,7 +28,7 @@ const int BUILTINLED = D4;                // MCU pin connected to the built-in L
 
 // Normally no need to change below this line
 const char *System::app_name    PROGMEM = "ESP8266 Yeelight Switch";
-const char *System::app_version PROGMEM = "2.0.0-beta.2";
+const char *System::app_version PROGMEM = "2.0.0-beta.3";
 const char *System::app_url     PROGMEM = "https://github.com/denis-stepanov/esp8266-yeelight-switch";
 
 using namespace ace_button;
@@ -73,76 +73,6 @@ int YBulb::Flip(WiFiClient &wfc) const {
     return -1;
 }
 
-// Logger class. TODO: make a library out of this
-const char *LOGFILENAME = "/log.txt";
-const char *LOGFILENAME2 = "/log2.txt";
-
-//// Logs tend to fill up the drive. It is good to always keep some space available,
-//// plus, logger will usually overshoot max log size by a few bytes. So reserve some free space
-const unsigned int LOGSLACK = 2048U;
-const size_t LOGSIZEMAX = 1048576U; // For large file systems, hard-limit log size. It is not likely that more than 2MiB of logs will be needed
-
-//// Start logging activities
-bool Logger::begin() {
-  FSInfo fsi;
-  System::fs.info(fsi);
-  if (fsi.totalBytes > LOGSLACK)
-    logSizeMax = (fsi.totalBytes - LOGSLACK) / 2 < LOGSIZEMAX ? (fsi.totalBytes - LOGSLACK) / 2 : LOGSIZEMAX;
-  else {
-    logSize = 0;
-    logSizeMax = 0;
-  }
-  logFile = System::fs.open(LOGFILENAME, "a");
-  if (!logFile) {
-    logSize = 0;
-    logSizeMax = 0;
-  } else
-    logSize = logFile.size();
-  return logSizeMax;
-}
-
-//// Finish logging activities
-bool Logger::end() {
-  logFile.close();
-  logSize = 0;
-  logSizeMax = 0;
-  return true;
-}
-
-//// Write a line to a log
-void Logger::writeln(const char *line) {
-  writeln((String)line);
-}
-
-//// Write a line to a log
-void Logger::writeln(const String &line) {
-  if (logSizeMax) {
-    String msg;
-    msg += System::getTimeStr();
-    msg += " ";
-    msg += line;
-    logFile.println(msg);
-    logFile.flush();
-    logSize += msg.length();
-  }
-}
-
-//// Check log size and rotate if needed
-void Logger::rotate() {
-  if (logSize > logSizeMax) {
-    System::log->printf(TIMED("Max log size (%u) reached, rotating...\n"), logSizeMax);
-    logFile.close();
-    System::fs.remove(LOGFILENAME2);          // Rename will fail if file exists
-    System::fs.rename(LOGFILENAME, LOGFILENAME2);
-    logSize = 0;
-    logFile = System::fs.open(LOGFILENAME, "a");
-    if(!logFile) {
-      end();
-      System::log->printf(TIMED("Log rotation failed; disabling logging\n"));
-    }
-  }
-}
-
 // Global variables
 JLed led(BUILTINLED);
 const unsigned long BLINK_DELAY = 100UL;    // (ms)
@@ -159,8 +89,6 @@ const uint16_t CONNECTION_TIMEOUT = 1000U;  // Bulb connection timeout (ms)
 
 LinkedList<YBulb *> bulbs;          // List of known bulbs
 uint8_t nabulbs = 0;                // Number of active bulbs
-
-Logger logger;                      // Event logger
 
 extern const uint8_t EEPROM_FORMAT_VERSION = 49;  // The first version of the format stored 1 bulb id right after the marker. ID stars with ASCII '0' == 48
 
@@ -296,23 +224,13 @@ uint8_t yl_nabulbs(void) {
 void setup(void) {
   System::begin();
 
-  logger.begin();
-  String msg = "booted: ";
-  msg += System::app_name;
-  msg += " v";
-  msg += System::app_version;
-  msg += " build ";
-  msg += System::app_build;
-  logger.writeln(msg);
-
   // I/O
   pinMode(PUSHBUTTON, INPUT);
   led.LowActive();
 
   // If the push button is pressed on boot, offer Wi-Fi configuration
   if (button.isPressedRaw()) {
-    System::log->printf(TIMED("Push button pressed on boot; going to Wi-Fi Manager\n"));
-    logger.writeln("going to Wi-Fi Manager");
+    System::appLogWriteLn("Push button pressed on boot; going to Wi-Fi Manager", true);
     led.On().Update();
     System::configureNetwork();
   }
@@ -363,8 +281,7 @@ void loop(void) {
   // Check the button state
   if (button_pressed) {
     button_pressed = false;
-    System::log->printf(TIMED("Button pressed\n"));
-    logger.writeln("Button pressed");
+    System::appLogWriteLn("Button pressed", true);
 
     // LED diagnostics:
     // 1 blink  - light flip OK
@@ -406,5 +323,4 @@ void loop(void) {
   System::update();
   button.check();
   led.Update();
-  logger.rotate();
 }

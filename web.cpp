@@ -12,7 +12,6 @@ using namespace ds;
 // Data providers
 extern LinkedList<YBulb *> bulbs;          // List of known bulbs
 extern uint8_t nabulbs;                    // Number of active bulbs
-extern Logger logger;                      // Event logger
 extern const uint8_t EEPROM_FORMAT_VERSION;// EEPROM format version
 extern const char *LOGFILENAME;            // Main log file name
 extern const char *LOGFILENAME2;           // Rotated log file name
@@ -204,96 +203,12 @@ void handleSave() {
 // Bulb flip page. Accessing this page immediately flips the light
 void handleFlip() {
   yl_flip();
-  logger.writeln("Web page flip received");
+  System::appLogWriteLn("Web page flip received");
 
   System::pushHTMLHeader((String)System::hostname + " flip");
   System::web_page += "<h3>Yeelight Button Flip</h3>";
   System::web_page += nabulbs ? "<p>Light flipped</p>" : "<p>No linked bulbs found</p>";
   System::web_page += "<p>[<a href=\"/flip\">Flip</a>] [<a href=\"..\">Back</a>]</p>";
-  System::pushHTMLFooter();
-  System::sendWebPage();
-}
-
-// Display log
-const unsigned long LOG_PAGE_SIZE = 2048UL;  // (bytes)
-void handleLog() {
-  System::log->printf(TIMED("Displaying log\n"));
-
-  // Parse query params
-  unsigned int logPage = 0;
-  String logFileName(LOGFILENAME);
-  String logFileParam;
-  for (int i = 0; i < System::web_server.args(); i++) {
-    String argname = System::web_server.argName(i);
-    if (argname == "p")
-      logPage = String(System::web_server.arg(i)).toInt();
-    else {
-      if (argname == "r") {
-        logFileName = LOGFILENAME2;
-        logFileParam = "r=1&";
-      }
-    }
-  }
-
-  System::pushHTMLHeader((String)System::hostname + " event log");
-  System::web_page += "<h3>Yeelight Button Event Log</h3>[<a href=\"/\">home</a>] ";
-  if (logger.isEnabled()) {
-    File logFile = System::fs.open(logFileName, "r");
-    if (!logFile)
-      System::web_page += "<span><br/>File opening error";
-    else {
-      const uint32_t fsize = logFile.size();
-
-      // Print pagination buttons
-      if (fsize > (logPage + 1) * LOG_PAGE_SIZE) {
-        System::web_page += "[<a href=\"/log?";
-        System::web_page += logFileParam;
-        System::web_page += "p=";
-        System::web_page += logPage + 1;
-        System::web_page += "\">&lt;&lt;</a>]\n";
-      } else {
-        if (logFileName == LOGFILENAME && System::fs.exists(LOGFILENAME2))
-          System::web_page += "[<a href=\"/log?r=1\">&lt;&lt;</a>]\n";
-        else
-          System::web_page += "[&lt;&lt;]\n";
-      }
-      if (logPage) {
-        System::web_page += "[<a href=\"/log?";
-        System::web_page += logFileParam;
-        System::web_page += "p=";
-        System::web_page += logPage - 1;
-        System::web_page += "\">&gt;&gt;</a>]\n";
-      } else {
-        if (logFileName == LOGFILENAME2 && System::fs.exists(LOGFILENAME)) {
-          File logFileNext = System::fs.open(LOGFILENAME, "r");
-          const unsigned int logPageNext = logFileNext.size() / LOG_PAGE_SIZE;
-          logFileNext.close();
-          System::web_page += "[<a href=\"/log?p=";
-          System::web_page += logPageNext;
-          System::web_page += "\">&gt;&gt;</a>]\n";
-        } else
-          System::web_page += "[&gt;&gt;]\n";
-      }
-
-      // Print log fragment
-      System::web_page += "<br/><span style=\"font-family: monospace;\">";
-
-      if (fsize > (logPage + 1) * LOG_PAGE_SIZE) {
-        logFile.seek(fsize - (logPage + 1) * LOG_PAGE_SIZE);
-        logFile.readStringUntil('\n');
-      }
-      String line;
-      while (logFile.available() && logFile.position() <= fsize - logPage * LOG_PAGE_SIZE) {
-        line = logFile.readStringUntil('\n');
-        System::web_page += "<br>";
-        System::web_page += line;   // already contains '\n'
-      }
-      logFile.close();
-    }
-
-    System::web_page += "</span>\n";
-  } else
-    System::web_page += "<br/>Logging is disabled (missing or full file system)";
   System::pushHTMLFooter();
   System::sendWebPage();
 }
@@ -304,6 +219,5 @@ void registerPages() {
   System::web_server.on("/conf", handleConf);
   System::web_server.on("/save", handleSave);
   System::web_server.on("/flip", handleFlip);
-  System::web_server.on("/log",  handleLog);
 }
 void (*System::registerWebPages)() = registerPages;

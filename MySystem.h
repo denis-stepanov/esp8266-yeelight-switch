@@ -4,7 +4,7 @@
 #ifndef _DS_SYSTEM_H_
 
 #define DS_CAP_APP_ID            // Enable application identification
-// #define DS_CAP_APP_LOG           // Enable application log
+#define DS_CAP_APP_LOG           // Enable application log
 // #define DS_CAP_SYS_LED           // Enable builtin LED
 // #define DS_CAP_SYS_LOG           // Enable syslog
 #define DS_CAP_SYS_LOG_HW        // Enable syslog on hardware serial line
@@ -36,7 +36,6 @@
 
 // KEEP THIS TEMPORARILY HERE UNTIL FURTHER RESTRUCTURING
 
-#include <FS.h>
 #include <WiFiClient.h>
 
 // Yeelight bulb object. TODO: make a library out of this
@@ -68,22 +67,6 @@ class YBulb {
     bool operator==(const char *id2) const {
       return !strcmp(id, id2);
     }
-};
-
-class Logger {
-    File logFile;
-    size_t logSize;
-    size_t logSizeMax;
-
-  public:
-    Logger(): logSize(0), logSizeMax(0) {};
-    ~Logger() { end(); };
-    bool begin();
-    bool end();
-    bool isEnabled() const { return logSizeMax; };
-    void writeln(const char *);
-    void writeln(const String &);
-    void rotate();
 };
 
 // Temporarily #define this, as with templated EEPROM.put() it does not work to define constant in one file and use it in another
