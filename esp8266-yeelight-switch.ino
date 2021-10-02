@@ -2,7 +2,7 @@
  * Developed & tested with a Witty Cloud Development board
  * (c) DNS 2018-2021
  *
- * To make logging work, set on compile: Flash Size: 4M (1M SPIFFS)
+ * To make logging work, set on compile: Flash Size: 4M (FS:1MB)
  *
  * Usage:
  * 0) review the configuration settings below; compile and flash your ESP8266
@@ -77,38 +77,33 @@ int YBulb::Flip(WiFiClient &wfc) const {
 const char *LOGFILENAME = "/log.txt";
 const char *LOGFILENAME2 = "/log2.txt";
 
-//// Logs tend to fill up the drive. SPIFFS manual recommends to always keep some space available,
+//// Logs tend to fill up the drive. It is good to always keep some space available,
 //// plus, logger will usually overshoot max log size by a few bytes. So reserve some free space
 const unsigned int LOGSLACK = 2048U;
 const size_t LOGSIZEMAX = 1048576U; // For large file systems, hard-limit log size. It is not likely that more than 2MiB of logs will be needed
 
 //// Start logging activities
 bool Logger::begin() {
-  if (SPIFFS.begin()) {       // TODO: make this work with SPIFFS already initialized
-    FSInfo fsi;
-    SPIFFS.info(fsi);
-    if (fsi.totalBytes > LOGSLACK)
-      logSizeMax = (fsi.totalBytes - LOGSLACK) / 2 < LOGSIZEMAX ? (fsi.totalBytes - LOGSLACK) / 2 : LOGSIZEMAX;
-    else {
-      SPIFFS.end();
-      logSize = 0;
-      logSizeMax = 0;
-    }
-    logFile = SPIFFS.open(LOGFILENAME, "a");
-    if (!logFile) {
-      SPIFFS.end();
-      logSize = 0;
-      logSizeMax = 0;
-    } else
-      logSize = logFile.size();
+  FSInfo fsi;
+  System::fs.info(fsi);
+  if (fsi.totalBytes > LOGSLACK)
+    logSizeMax = (fsi.totalBytes - LOGSLACK) / 2 < LOGSIZEMAX ? (fsi.totalBytes - LOGSLACK) / 2 : LOGSIZEMAX;
+  else {
+    logSize = 0;
+    logSizeMax = 0;
   }
+  logFile = System::fs.open(LOGFILENAME, "a");
+  if (!logFile) {
+    logSize = 0;
+    logSizeMax = 0;
+  } else
+    logSize = logFile.size();
   return logSizeMax;
 }
 
 //// Finish logging activities
 bool Logger::end() {
   logFile.close();
-  SPIFFS.end();
   logSize = 0;
   logSizeMax = 0;
   return true;
@@ -137,10 +132,10 @@ void Logger::rotate() {
   if (logSize > logSizeMax) {
     System::log->printf(TIMED("Max log size (%u) reached, rotating...\n"), logSizeMax);
     logFile.close();
-    SPIFFS.remove(LOGFILENAME2);          // Rename will fail if file exists
-    SPIFFS.rename(LOGFILENAME, LOGFILENAME2);
+    System::fs.remove(LOGFILENAME2);          // Rename will fail if file exists
+    System::fs.rename(LOGFILENAME, LOGFILENAME2);
     logSize = 0;
-    logFile = SPIFFS.open(LOGFILENAME, "a");
+    logFile = System::fs.open(LOGFILENAME, "a");
     if(!logFile) {
       end();
       System::log->printf(TIMED("Log rotation failed; disabling logging\n"));
