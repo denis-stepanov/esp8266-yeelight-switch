@@ -203,7 +203,9 @@ void handleSave() {
 // Bulb flip page. Accessing this page immediately flips the light
 void handleFlip() {
   yl_flip();
-  System::appLogWriteLn("Web page flip received");
+  String lmsg = "Web page flip received from ";
+  lmsg += System::web_server.client().remoteIP().toString();
+  System::appLogWriteLn(lmsg);
 
   System::pushHTMLHeader((String)System::hostname + " flip");
   System::web_page += "<h3>Yeelight Button Flip</h3>";
