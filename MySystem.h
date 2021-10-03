@@ -5,7 +5,7 @@
 
 #define DS_CAP_APP_ID            // Enable application identification
 #define DS_CAP_APP_LOG           // Enable application log
-// #define DS_CAP_SYS_LED           // Enable builtin LED
+#define DS_CAP_SYS_LED           // Enable builtin LED
 // #define DS_CAP_SYS_LOG           // Enable syslog
 #define DS_CAP_SYS_LOG_HW        // Enable syslog on hardware serial line
 // #define DS_CAP_SYS_RESET         // Enable software reset interface

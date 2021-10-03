@@ -15,7 +15,6 @@
 
 #include <WiFiUdp.h>
 #include <EEPROM.h>
-#include <jled.h>             // https://github.com/jandelgado/jled
 #include <AceButton.h>        // https://github.com/bxparks/AceButton
 #include <LinkedList.h>       // https://github.com/ivanseidel/LinkedList
 
@@ -24,7 +23,6 @@ using namespace ds;
 // Configuration
 const char *System::hostname PROGMEM = "ybutton1";   // <hostname>.local in the local network. Also SSID of the temporary network for Wi-Fi configuration
 const int PUSHBUTTON = D2;                // MCU pin connected to the main push button (D2 for Witty Cloud). The code below assumes the button is pulled high (HIGH == OFF)
-const int BUILTINLED = D4;                // MCU pin connected to the built-in LED (D4 for Witty Cloud). The code below assumes the LED is pulled high (HIGH == OFF)
 
 // Normally no need to change below this line
 const char *System::app_name    PROGMEM = "ESP8266 Yeelight Switch";
@@ -74,7 +72,6 @@ int YBulb::Flip(WiFiClient &wfc) const {
 }
 
 // Global variables
-JLed led(BUILTINLED);
 const unsigned long BLINK_DELAY = 100UL;    // (ms)
 const unsigned long GLOW_DELAY = 1000UL;    // (ms)
 AceButton button(PUSHBUTTON);
@@ -226,16 +223,11 @@ void setup(void) {
 
   // I/O
   pinMode(PUSHBUTTON, INPUT);
-  led.LowActive();
 
   // If the push button is pressed on boot, offer Wi-Fi configuration
-  if (button.isPressedRaw()) {
-    System::appLogWriteLn("Push button pressed on boot; going to Wi-Fi Manager", true);
-    led.On().Update();
+  if (button.isPressedRaw())
     System::configureNetwork();
-  }
   button.setEventHandler(handleButtonEvent);
-  led.Off().Update();
 
   // Run discovery
   yl_discover();
@@ -292,7 +284,7 @@ void loop(void) {
 
       // No Wi-Fi
       System::log->printf(TIMED("No Wi-Fi connection\n"));
-      led.Breathe(GLOW_DELAY).Repeat(1);            // 1 glowing
+      System::led.Breathe(GLOW_DELAY).Repeat(1);            // 1 glowing
     } else {
       if (nabulbs) {
 
@@ -300,21 +292,21 @@ void loop(void) {
         // To make JLED working smoothly in this case, an asynchronous WiFiClient.connect() method would be needed
         // This is not included in ESP8266 Core (https://github.com/esp8266/Arduino/issues/922), but is available as a separate library (like ESPAsyncTCP)
         // Since, for this project, it is a minor issue (flip being sent to bulbs with 100 ms delay), we stay with blocking connect()
-        led.On().Update();
+        System::led.On().Update();
         delay(BLINK_DELAY);       // 1 blink. Note that using delay() inside loop() may skew sysClock, as per AceTime documentation
-        led.Off().Update();
+        System::led.Off().Update();
 
         if (yl_flip())
 
           // Some bulbs did not respond
           // Because of connection timeout, the blinking will be 1 + pause + 2
-          led.Blink(BLINK_DELAY, BLINK_DELAY * 2).Repeat(2);  // 2 blinks
+          System::led.Blink(BLINK_DELAY, BLINK_DELAY * 2).Repeat(2);  // 2 blinks
 
       } else {
 
         // Button not linked
         System::log->printf(TIMED("Button not linked to bulbs\n"));
-        led.Blink(BLINK_DELAY, BLINK_DELAY * 2).Repeat(2);    // 2 blinks
+        System::led.Blink(BLINK_DELAY, BLINK_DELAY * 2).Repeat(2);    // 2 blinks
       }
     }
   }
@@ -322,5 +314,4 @@ void loop(void) {
   // Background processing
   System::update();
   button.check();
-  led.Update();
 }
