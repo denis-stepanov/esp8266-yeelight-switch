@@ -34,9 +34,9 @@ Usage:
  The LED is constantly lit during Wi-Fi reconfiguration process.
  
  Prerequsites:
- 1. Hardware:
-    1. ESP8266 (tested with [ESP-12E Witty Cloud](https://www.instructables.com/Witty-Cloud-Module-Adapter-Board/), Arduino IDE board setting: LOLIN(WEMOS) D1 R2 and mini);
-    2. Push button connected to a GPIO and pulled high;
+ 1. Hardware: ESP8266. Tested with:
+    1. [ESP-12E Witty Cloud](https://www.instructables.com/Witty-Cloud-Module-Adapter-Board/), Arduino IDE board setting: LOLIN(WEMOS) D1 R2 and mini);
+    2. [ESP-12E NodeMCU](https://www.make-it.ca/nodemcu-details-specifications/), Arduino IDE board setting: NodeMCU 1.0 (ESP-12E Module).
  2. Software:
     1. Arduino IDE, https://www.arduino.cc/en/main/software (version tested: 1.8.13);
     2. ESP8266 core for Arduino, https://github.com/esp8266/Arduino (version tested: 3.0.2);
