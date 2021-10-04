@@ -5,10 +5,12 @@
  * To make logging work, set on compile: Flash Size: 4M (FS:1MB)
  *
  * Usage:
- * 0) review the configuration settings below; compile and flash your ESP8266
- * 1) boot, long press the button until the LED lights up, connect your computer to the Wi-Fi network "ybutton1", enter and save your network credentials
- * 2) in your network, go to http://ybutton1.local, run the Yeelight scan and link the switch to the bulb found
- * 3) use the push button to control your bulb
+ * 1) review the configuration settings at the top of the program and in MySystem.h; compile and flash your ESP8266;
+ * 2) boot, long press the button until the LED lights up, connect your computer to the Wi-Fi network "ybutton1", password "42ybutto",
+ *    go to captive portal, enter and save your Wi-Fi network credentials;
+ * 3) in your Wi-Fi network, go to http://ybutton1.local, run the Yeelight scan and link the switch to the bulb found;
+ * 4) use the push button to control your bulb manually;
+ * 5) access to http://ybutton1.local/flip to toggle the bulb from a script.
  */
 
 #include "MySystem.h"                            // System-level definitions
