@@ -17,7 +17,7 @@
 #define DS_CAP_WIFIMANAGER       // Enable Wi-Fi configuration at runtime
 #define DS_CAP_MDNS              // Enable mDNS
 #define DS_CAP_WEBSERVER         // Enable web server
-// #define DS_CAP_BUTTON            // Enable button
+#define DS_CAP_BUTTON            // Enable button
 // #define DS_CAP_TIMERS            // Enable timers
 // #define DS_CAP_TIMERS_ABS        // Enable timers from absolute time
 // #define DS_CAP_TIMERS_SOLAR      // Enable timers from solar events
@@ -27,6 +27,13 @@
 
 
 #define DS_TIMEZONE TZ_Europe_Paris       // Timezone. Pick yours from https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h
+
+// Different button wiring on various boards
+//// For Witty Cloud, use board "LOLIN(WEMOS) D1 R2 & mini"
+#ifdef ARDUINO_ESP8266_WEMOS_D1MINI
+#define BUTTON_BUILTIN D2
+#endif // ARDUINO_ESP8266_WEMOS_D1MINI
+
 // #define DS_LATITUDE 51.483611             // Latitude if solar events are used
 // #define DS_LONGITUDE -0.005833            // Longitude if solar events are used
 // #define DS_FS_TYPE LittleFS               // "LittleFS" or "SPIFFS" (without quotes)

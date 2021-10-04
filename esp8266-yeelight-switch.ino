@@ -6,7 +6,7 @@
  *
  * Usage:
  * 0) review the configuration settings below; compile and flash your ESP8266
- * 1) boot with the push button pressed, connect your computer to the Wi-Fi network "ybutton1", enter and save your network credentials
+ * 1) boot, long press the button until the LED lights up, connect your computer to the Wi-Fi network "ybutton1", enter and save your network credentials
  * 2) in your network, go to http://ybutton1.local, run the Yeelight scan and link the switch to the bulb found
  * 3) use the push button to control your bulb
  */
@@ -15,14 +15,12 @@
 
 #include <WiFiUdp.h>
 #include <EEPROM.h>
-#include <AceButton.h>        // https://github.com/bxparks/AceButton
 #include <LinkedList.h>       // https://github.com/ivanseidel/LinkedList
 
 using namespace ds;
 
 // Configuration
 const char *System::hostname PROGMEM = "ybutton1";   // <hostname>.local in the local network. Also SSID of the temporary network for Wi-Fi configuration
-const int PUSHBUTTON = D2;                // MCU pin connected to the main push button (D2 for Witty Cloud). The code below assumes the button is pulled high (HIGH == OFF)
 
 // Normally no need to change below this line
 const char *System::app_name    PROGMEM = "ESP8266 Yeelight Switch";
@@ -74,7 +72,6 @@ int YBulb::Flip(WiFiClient &wfc) const {
 // Global variables
 const unsigned long BLINK_DELAY = 100UL;    // (ms)
 const unsigned long GLOW_DELAY = 1000UL;    // (ms)
-AceButton button(PUSHBUTTON);
 bool button_pressed = false;
 
 WiFiClient client;                  // Client used to talk to a bulb
@@ -93,6 +90,7 @@ extern const uint8_t EEPROM_FORMAT_VERSION = 49;  // The first version of the fo
 void handleButtonEvent(AceButton* /* button */, uint8_t eventType, uint8_t /* buttonState */) {
   button_pressed = eventType == AceButton::kEventPressed;
 }
+void (*System::onButtonPress)(AceButton*, uint8_t, uint8_t) = handleButtonEvent;
 
 // Yeelight discovery. Note - no bulb removal at the moment
 void yl_discover(void) {
@@ -221,14 +219,6 @@ uint8_t yl_nabulbs(void) {
 void setup(void) {
   System::begin();
 
-  // I/O
-  pinMode(PUSHBUTTON, INPUT);
-
-  // If the push button is pressed on boot, offer Wi-Fi configuration
-  if (button.isPressedRaw())
-    System::configureNetwork();
-  button.setEventHandler(handleButtonEvent);
-
   // Run discovery
   yl_discover();
 
@@ -313,5 +303,4 @@ void loop(void) {
 
   // Background processing
   System::update();
-  button.check();
 }
