@@ -34,6 +34,7 @@
 #define BUTTON_BUILTIN D2
 #endif // ARDUINO_ESP8266_WEMOS_D1MINI
 //// For NodeMCU, use board "NodeMCU 1.0 (ESP-12E Module)"
+//// For ESP-01(S), use board "Generic ESP8266 Module"; Flash Size "1MB (FS:256KB)"; Builtin LED: 1 for ESP-01, 2 for ESP-01S. Connect a push button between GPIO0 and GND
 
 // #define DS_LATITUDE 51.483611             // Latitude if solar events are used
 // #define DS_LONGITUDE -0.005833            // Longitude if solar events are used
