@@ -35,8 +35,9 @@ Usage:
  
  Prerequsites:
  1. Hardware: ESP8266. Tested with:
-    1. [ESP-12E Witty Cloud](https://www.instructables.com/Witty-Cloud-Module-Adapter-Board/), Arduino IDE board setting: LOLIN(WEMOS) D1 R2 and mini);
-    2. [ESP-12E NodeMCU](https://www.make-it.ca/nodemcu-details-specifications/), Arduino IDE board setting: NodeMCU 1.0 (ESP-12E Module).
+    1. [ESP-12E Witty Cloud](https://www.instructables.com/Witty-Cloud-Module-Adapter-Board/), Arduino IDE board setting: "LOLIN(WEMOS) D1 R2 and mini)";
+    2. [ESP-12E NodeMCU](https://www.make-it.ca/nodemcu-details-specifications/), Arduino IDE board setting: "NodeMCU 1.0 (ESP-12E Module)";
+    3. [ESP-01S](https://diyprojects.io/esp01-get-started-arduino-platformio-ide-module-choose-pinout/) with an external button, Arduino IDE board settings: "Generic ESP8266 Module"; Flash Size "1MB (FS:256KB)"; Builtin LED: 2
  2. Software:
     1. Arduino IDE, https://www.arduino.cc/en/main/software (version tested: 1.8.13);
     2. ESP8266 core for Arduino, https://github.com/esp8266/Arduino (version tested: 3.0.2);
@@ -47,7 +48,9 @@ Usage:
 
 (*) dependency will be removed in version 2.0.0.
  
- If you have an ESP with an onboard button, such as a Witty Cloud Development board, the program can be used out of the box. Otherwise you need to wire the button and update the GPIO number in the source code.
+ If you have an ESP with an onboard button, such as a Witty Cloud Development board, or NodeMCU, the program can be used out of the box. Otherwise you need to wire your own push button between GPIO0 and GND.
+ 
+ ![boards](data/images/boards.png)
  
  26 Sep 2021:
  * version 2.0 is in prepapation, which will mostly concern refactoring and porting to [esp-ds-system](https://github.com/denis-stepanov/esp-ds-system) library;
