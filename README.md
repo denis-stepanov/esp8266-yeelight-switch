@@ -48,9 +48,15 @@ Usage:
 
 (*) dependency will be removed in version 2.0.0.
  
- If you have an ESP with an onboard button, such as a Witty Cloud Development board, or NodeMCU, the program can be used out of the box. Otherwise you need to wire your own push button between GPIO0 and GND.
+ If you have an ESP with an onboard button, such as a Witty Cloud Development board, or a NodeMCU, the program can be used out of the box. Otherwise you need to wire your own push button between GPIO0 and GND. If your prefer to use other GPIO, define or update its number in `MySystem.h`
  
  ![boards](data/images/boards.png)
+ 
+ Example of connections for an ESP-01S board shown above:
+ 
+ ![esp-01s schematic](data/images/schematic-esp-01s.png)
+ 
+ Here 5V power is provided via micro-USB connector `J2` and is stepped down to 3.3V using convertor `U2`. If you happened to have a 3.3V power supply, you can omit these elements. If you do not care about diagnostic output, you can drop its port `J1` too.
  
  26 Sep 2021:
  * version 2.0 is in prepapation, which will mostly concern refactoring and porting to [esp-ds-system](https://github.com/denis-stepanov/esp-ds-system) library;
