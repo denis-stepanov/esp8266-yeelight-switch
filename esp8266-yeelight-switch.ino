@@ -31,16 +31,16 @@ const char *System::app_url     PROGMEM = "https://github.com/denis-stepanov/esp
 using namespace ace_button;
 
 // Global variables
-const unsigned long BLINK_DELAY = 100UL;    // (ms)
-const unsigned long GLOW_DELAY = 1000UL;    // (ms)
+const unsigned long BLINK_DELAY = 100;    // (ms)
+const unsigned long GLOW_DELAY = 1000;    // (ms)
 bool button_pressed = false;
 
 WiFiClient client;                  // Client used to talk to a bulb
 WiFiUDP udp;                        // UDP socket used for discovery process
 
-const unsigned int MAX_DISCOVERY_REPLY_SIZE = 512U; // With current bulbs, the reply is about 500 bytes
+const unsigned int MAX_DISCOVERY_REPLY_SIZE = 512; // With current bulbs, the reply is about 500 bytes
 char discovery_reply[MAX_DISCOVERY_REPLY_SIZE]; // Buffer to hold one discovery reply
-const uint16_t CONNECTION_TIMEOUT = 1000U;  // Bulb connection timeout (ms)
+const uint16_t CONNECTION_TIMEOUT = 1000;  // Bulb connection timeout (ms)
 
 LinkedList<YBulb *> bulbs;          // List of known bulbs
 uint8_t nabulbs = 0;                // Number of active bulbs
@@ -56,9 +56,9 @@ void (*System::onButtonPress)(AceButton*, uint8_t, uint8_t) = handleButtonEvent;
 
 // Yeelight discovery. Note - no bulb removal at the moment
 void yl_discover(void) {
-  const unsigned long DISCOVERY_TIMEOUT = 3000UL;   // (ms)
+  const unsigned long DISCOVERY_TIMEOUT = 3000;   // (ms)
   const IPAddress upnp_ip(239,255,255,250);         // Yeelight is using a flavor of UPnP protocol
-  const uint16_t upnp_port_yeelight = 1982U;        // but the port is different from standard
+  const uint16_t upnp_port_yeelight = 1982;        // but the port is different from standard
 
   // Send broadcast message
   System::log->printf(TIMED("Sending Yeelight discovery request...\n"));
