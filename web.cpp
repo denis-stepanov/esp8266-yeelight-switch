@@ -6,6 +6,7 @@
 #include "MySystem.h"                      // System-level definitions
 #include <EEPROM.h>                        // EEPROM support
 #include <LinkedList.h>                    // Linked list support
+#include "YBulb.h"                         // Yeelight support
 
 using namespace ds;
 
