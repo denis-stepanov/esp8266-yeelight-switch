@@ -2,7 +2,7 @@
  * (c) DNS 2020-2021
  */
 
-#include "MySystem.h"        // Read the defined capabilities
+#include "../MySystem.h"        // Read the defined capabilities
 
 using namespace ds;
 

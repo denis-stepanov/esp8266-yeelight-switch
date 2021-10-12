@@ -83,6 +83,6 @@ class YBulb {
 
 // END OF TEMPORARY SECTION
 
-#include "System.h"         // DS-System global definitions
+#include "src/System.h"         // DS-System global definitions
 
 #endif // _DS_SYSTEM_H_
