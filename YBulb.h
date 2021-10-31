@@ -6,10 +6,18 @@
 #ifndef _YBULB_H_
 #define _YBULB_H_
 
-#include <WiFiClient.h>
+#include <WiFiClient.h>           // Wi-Fi support
+#include <WiFiUdp.h>              // UDP support
+
+// FIXME descriptions
+// FIXME camelCase
+// TODO: this is too much of a plain C. Arduinize
 
 // Yeelight bulb object. TODO: make a true library out of this
 class YBulb {
+
+  protected:
+
     char id[24];
     char ip[16];
     uint16_t port;
@@ -19,8 +27,13 @@ class YBulb {
     bool active;
 
   public:
+
+   static const uint8_t ID_LENGTH = 18;        // Length of the Yeelight device ID (chars)
+   static const uint16_t TIMEOUT = 1000;       // Bulb connection timeout (ms)
+
     YBulb(const char *, const char *, const uint16_t);
     ~YBulb(){};
+
     const char *GetID() const { return id; }
     const char *GetIP() const { return ip; }
     uint16_t GetPort() const { return port; }
@@ -34,12 +47,30 @@ class YBulb {
     void Activate() { active = true; }
     void Deactivate() { active = false; }
     int Flip(WiFiClient&) const;
+    void printStatusHTML() const;              // Print bulb status in HTML
+    void printConfHTML(uint8_t) const;         // Print bulb configuration controls in HTML
     bool operator==(const char *id2) const {
       return !strcmp(id, id2);
     }
 };
 
-// Temporarily #define this, as with templated EEPROM.put() it does not work to define constant in one file and use it in another
-#define YL_ID_LENGTH 18U            // Length of Yeelight device ID (chars)
+// Yeelight discovery
+class YDiscovery {
+
+  protected:
+
+    WiFiUDP udp;                                 // UDP socket used for discovery process
+    unsigned long t0;                            // Discovery start time
+    unsigned long t1;                            // Discovery time in progress
+
+  public:
+
+    static const unsigned long TIMEOUT = 3000;   // Discovery timeout (ms)
+
+    YDiscovery();                                // Constructor
+    bool send();                                 // Send discovery request
+    YBulb *receive();                            // Receive discovery reply
+    bool isInProgress();                         // True if discovery process is in progress
+};
 
 #endif // _YBULB_H_
