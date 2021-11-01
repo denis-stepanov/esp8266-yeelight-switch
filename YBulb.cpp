@@ -171,6 +171,7 @@ YBulb *YDiscovery::receive() {
           token = strtok_r(nullptr, "\r\n", &line_ctx);
         }
       }
+      break;
     }
   }
   return new_bulb;

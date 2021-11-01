@@ -125,7 +125,7 @@ uint8_t BulbManager::discover() {
     const auto discovered_bulb = discovery.receive();
     if (!discovered_bulb)
       continue;
-    const YBulb *new_bulb = nullptr;
+    YBulb *new_bulb = nullptr;
 
     // Check if we already have this bulb in the list
     // TODO: add search function
