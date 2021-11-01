@@ -8,7 +8,7 @@
 
 #include <WiFiClient.h>                    // Wi-Fi communication
 #include <LinkedList.h>                    // https://github.com/ivanseidel/LinkedList
-#include "YBulb.h"                         // Yeelight support
+#include "Yeelight.h"                      // Yeelight support
 
 class BulbManager {
 

@@ -3,8 +3,8 @@
  * (c) DNS 2018-2021
  */
 
-#ifndef _YBULB_H_
-#define _YBULB_H_
+#ifndef _YEELIGHT_H_
+#define _YEELIGHT_H_
 
 #include <WiFiClient.h>           // Wi-Fi support
 #include <WiFiUdp.h>              // UDP support
@@ -73,4 +73,4 @@ class YDiscovery {
     bool isInProgress();                         // True if discovery process is in progress
 };
 
-#endif // _YBULB_H_
+#endif // _YEELIGHT_H_

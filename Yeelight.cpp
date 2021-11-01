@@ -3,7 +3,7 @@
  * (c) DNS 2018-2021
  */
 
-#include "YBulb.h"                         // Yeelight support
+#include "Yeelight.h"                      // Yeelight support
 #include "MySystem.h"                      // System-level definitions
 
 using namespace ds;
