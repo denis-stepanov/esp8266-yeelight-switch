@@ -10,8 +10,6 @@ using namespace ds;
 
 // Data providers
 extern BulbManager bulb_manager;           // Bulb manager
-extern const char *LOGFILENAME;            // Main log file name
-extern const char *LOGFILENAME2;           // Rotated log file name
 
 // TODO: make auto-redirect from reply pages
 
