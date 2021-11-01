@@ -4,9 +4,7 @@
  */
 
 #include "Yeelight.h"                      // Yeelight support
-#include "MySystem.h"                      // System-level definitions
-
-using namespace ds;
+#include <ESP8266WiFi.h>                   // Wi-Fi support
 
 // Yeelight protocol; see https://www.yeelight.com/en_US/developer
 const char *YL_MSG_TOGGLE = "{\"id\":1,\"method\":\"toggle\",\"params\":[]}\r\n";
@@ -52,36 +50,36 @@ int YBulb::Flip(WiFiClient &wfc) const {
 
 // Print bulb status in HTML
 // TODO: synergy between two functions?
-void YBulb::printStatusHTML() const {
-  System::web_page += "<li>id(";
-  System::web_page += id;
-  System::web_page += "), ip(";
-  System::web_page += ip;
-  System::web_page += "), name(";
-  System::web_page += name;
-  System::web_page += "), model(";
-  System::web_page += model;
-  System::web_page += ")</li>";
+void YBulb::printStatusHTML(String& str) const {
+  str += "<li>id(";
+  str += id;
+  str += "), ip(";
+  str += ip;
+  str += "), name(";
+  str += name;
+  str += "), model(";
+  str += model;
+  str += ")</li>";
 }
 
 // Print bulb configuration controls in HTML
-void YBulb::printConfHTML(uint8_t num) const {
-  System::web_page += "<input type=\"checkbox\" name=\"bulb\" value=\"";
-  System::web_page += num;
-  System::web_page += "\"";
+void YBulb::printConfHTML(String& str, uint8_t num) const {
+  str += "<input type=\"checkbox\" name=\"bulb\" value=\"";
+  str += num;
+  str += "\"";
   if (active)
-    System::web_page += " checked";
-  System::web_page += "/> ";
-  System::web_page += ip;
-  System::web_page += " id(";
-  System::web_page += id;
-  System::web_page += ") name(";
-  System::web_page += name;
-  System::web_page += ") model(";
-  System::web_page += model;
-  System::web_page += ") power(";
-  System::web_page += power ? "<b>on</b>" : "off";
-  System::web_page += ")<br/>";
+    str += " checked";
+  str += "/> ";
+  str += ip;
+  str += " id(";
+  str += id;
+  str += ") name(";
+  str += name;
+  str += ") model(";
+  str += model;
+  str += ") power(";
+  str += power ? "<b>on</b>" : "off";
+  str += ")<br/>";
 }
 
 
@@ -128,7 +126,6 @@ YBulb *YDiscovery::receive() {
   while (isInProgress()) {
     int len = udp.parsePacket();
     if (len > 0) {
-      System::log->printf(TIMED("Received %d bytes from %s, port %d\n"), len, udp.remoteIP().toString().c_str(), udp.remotePort());
       len = udp.read(discovery_reply, sizeof(discovery_reply));
       if (len > 0) {
         discovery_reply[len] = 0;
@@ -150,23 +147,16 @@ YBulb *YDiscovery::receive() {
             port = strtok(nullptr, ":");
             if (host && port) {
               new_bulb = new YBulb(token, host, atoi(port));
-            } else
-              System::log->printf(TIMED("Bad address; ignoring 1 bulb\n"));
+            }
           } else if (!strncmp(token, "model: ", 7)) {
-            if (strtok(token, " ") && new_bulb) {
+            if (strtok(token, " ") && new_bulb)
               new_bulb->SetModel(strtok(nullptr, " "));
-              System::log->printf(TIMED("Bulb model: %s\n"), new_bulb->GetModel());
-            }
           } else if (!strncmp(token, "name: ", 6)) {
-            if (strtok(token, " ") && new_bulb) {
-              new_bulb->SetName(strtok(nullptr, " "));
-              System::log->printf(TIMED("Bulb name: %s\n"), new_bulb->GetName());   // Currently, Yeelights always seem to return an empty name here :(
-            }
+            if (strtok(token, " ") && new_bulb)
+              new_bulb->SetName(strtok(nullptr, " "));  // Currently, Yeelights always seem to return an empty name here :(
           } else if (!strncmp(token, "power: ", 7)) {
-            if (strtok(token, " ") && new_bulb) {
+            if (strtok(token, " ") && new_bulb)
               new_bulb->SetPower(strcmp(strtok(nullptr, " "), "off"));
-              System::log->printf(TIMED("Bulb power: %s\n"), new_bulb->GetPower() ? "on" : "off");
-            }
           }
           token = strtok_r(nullptr, "\r\n", &line_ctx);
         }

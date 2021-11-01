@@ -28,8 +28,8 @@ class YBulb {
 
   public:
 
-   static const uint8_t ID_LENGTH = 18;        // Length of the Yeelight device ID (chars)
-   static const uint16_t TIMEOUT = 1000;       // Bulb connection timeout (ms)
+   static const uint8_t ID_LENGTH = 18;          // Length of the Yeelight device ID (chars)
+   static const uint16_t TIMEOUT = 1000;         // Bulb connection timeout (ms)
 
     YBulb(const char *, const char *, const uint16_t);
     ~YBulb(){};
@@ -47,8 +47,8 @@ class YBulb {
     void Activate() { active = true; }
     void Deactivate() { active = false; }
     int Flip(WiFiClient&) const;
-    void printStatusHTML() const;              // Print bulb status in HTML
-    void printConfHTML(uint8_t) const;         // Print bulb configuration controls in HTML
+    void printStatusHTML(String&) const;         // Print bulb status in HTML
+    void printConfHTML(String&, uint8_t) const;  // Print bulb configuration controls in HTML
     bool operator==(const char *id2) const {
       return !strcmp(id, id2);
     }

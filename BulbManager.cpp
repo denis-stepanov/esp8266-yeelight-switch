@@ -137,10 +137,14 @@ uint8_t BulbManager::discover() {
       }
     }
     if (new_bulb) {
-      System::log->printf(TIMED("Bulb already registered; ignoring\n"));
+      System::log->printf(TIMED("Received bulb id: %s is already registered; ignoring\n"), discovered_bulb->GetID());
       delete discovered_bulb;
-    } else
+    } else {
       bulbs.add(discovered_bulb);
+      System::log->printf(TIMED("Registered bulb id: %s, name: %s, model: %s, power: %s\n"),
+        discovered_bulb->GetID(), discovered_bulb->GetName(),
+        discovered_bulb->GetModel(), discovered_bulb->GetPower() ? "on" : "off");
+    }
   }
   
   System::log->printf(TIMED("Total bulbs discovered: %d\n"), bulbs.size());
@@ -188,12 +192,12 @@ void BulbManager::printStatusHTML() const {
   for (uint8_t i = 0; i < const_cast<BulbManager *>(this)->bulbs.size(); i++) {
     const auto bulb = const_cast<BulbManager *>(this)->bulbs.get(i);
     if (bulb->isActive())
-      bulb->printStatusHTML();
+      bulb->printStatusHTML(System::web_page);
   }
 }
 
 // Print bulb configuration controls in HTML
 void BulbManager::printConfHTML() const {
   for (uint8_t i = 0; i < const_cast<BulbManager *>(this)->bulbs.size(); i++)
-    const_cast<BulbManager *>(this)->bulbs.get(i)->printConfHTML(i);   
+    const_cast<BulbManager *>(this)->bulbs.get(i)->printConfHTML(System::web_page, i);
 }
