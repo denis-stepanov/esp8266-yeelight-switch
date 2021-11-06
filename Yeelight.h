@@ -11,46 +11,47 @@
 
 // FIXME descriptions
 // FIXME camelCase
-// TODO: this is too much of a plain C. Arduinize
 
 // Yeelight bulb object. TODO: make a true library out of this
 class YBulb {
 
   protected:
 
-    char id[24];
-    char ip[16];
+    String id;
+    String ip;
     uint16_t port;
-    char name[32];
-    char model[16];
+    String name;
+    String model;
     bool power;
     bool active;
 
   public:
 
-   static const uint8_t ID_LENGTH = 18;          // Length of the Yeelight device ID (chars)
-   static const uint16_t TIMEOUT = 1000;         // Bulb connection timeout (ms)
+    static const uint8_t ID_LENGTH = 18;          // Length of the Yeelight device ID (chars)
+    static const uint16_t TIMEOUT = 1000;         // Bulb connection timeout (ms)
 
-    YBulb(const char *, const char *, const uint16_t);
+    YBulb(const String& yid, const String& yip, const uint16_t yport = 55443) :
+      id(yid), ip(yip), port(yport), power(false), active(false) {}
     ~YBulb(){};
 
-    const char *GetID() const { return id; }
-    const char *GetIP() const { return ip; }
+    const String& GetID() const { return id; }
+    const String& GetIP() const { return ip; }
+    // TODO: setIP()?
     uint16_t GetPort() const { return port; }
-    const char *GetName() const { return name; }
-    void SetName(const char *);
-    const char *GetModel() const { return model; }
-    void SetModel(const char *);
+    const String& GetName() const { return name; }
+    void SetName(const String& yname) { name = yname; }
+    const String& GetModel() const { return model; }
+    void SetModel(const String& ymodel) { model = ymodel; }
     bool GetPower() const { return power; }
-    void SetPower(const bool ypower) { power = ypower; }
+    void SetPower(bool new_power) { power = new_power; }
     bool isActive() const { return active; }
     void Activate() { active = true; }
     void Deactivate() { active = false; }
     int Flip(WiFiClient&) const;
     void printStatusHTML(String&) const;         // Print bulb status in HTML
     void printConfHTML(String&, uint8_t) const;  // Print bulb configuration controls in HTML
-    bool operator==(const char *id2) const {
-      return !strcmp(id, id2);
+    bool operator==(const String& id2) const {
+      return id == id2;
     }
 };
 
@@ -65,6 +66,7 @@ class YDiscovery {
 
   public:
 
+    const size_t MAX_REPLY_SIZE = 512;           // With contemporary bulbs, the reply is about 500 bytes
     static const unsigned long TIMEOUT = 3000;   // Discovery timeout (ms)
 
     YDiscovery();                                // Constructor

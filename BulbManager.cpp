@@ -80,7 +80,7 @@ void BulbManager::save() {
       if (n < bulbs.size()) {
         YBulb *bulb = bulbs.get(n);
         char bulbid_c[YBulb::ID_LENGTH + 1] = {0,};
-        strncpy(bulbid_c, bulb->GetID(), YBulb::ID_LENGTH);
+        strncpy(bulbid_c, bulb->GetID().c_str(), YBulb::ID_LENGTH);
         EEPROM.put(eeprom_addr, bulbid_c);
         eeprom_addr += sizeof(bulbid_c);
         bulb->Activate();
@@ -137,13 +137,13 @@ uint8_t BulbManager::discover() {
       }
     }
     if (new_bulb) {
-      System::log->printf(TIMED("Received bulb id: %s is already registered; ignoring\n"), discovered_bulb->GetID());
+      System::log->printf(TIMED("Received bulb id: %s is already registered; ignoring\n"), discovered_bulb->GetID().c_str());
       delete discovered_bulb;
     } else {
       bulbs.add(discovered_bulb);
       System::log->printf(TIMED("Registered bulb id: %s, name: %s, model: %s, power: %s\n"),
-        discovered_bulb->GetID(), discovered_bulb->GetName(),
-        discovered_bulb->GetModel(), discovered_bulb->GetPower() ? "on" : "off");
+        discovered_bulb->GetID().c_str(), discovered_bulb->GetName().c_str(),
+        discovered_bulb->GetModel().c_str(), discovered_bulb->GetPower() ? "on" : "off");
     }
   }
   
@@ -159,7 +159,7 @@ int BulbManager::flip() {
       YBulb *bulb = bulbs.get(i);
       if (bulb && bulb->isActive()) {
         if (bulb->Flip(client)) {
-          System::log->printf(TIMED("Bulb connection to %s failed\n"), bulb->GetIP());
+          System::log->printf(TIMED("Bulb connection to %s failed\n"), bulb->GetIP().c_str());
           ret = -2;
           yield();        // Connection timeout is lenghty; allow for background processing (is this really needed?)
         } else

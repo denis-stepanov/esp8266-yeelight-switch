@@ -12,33 +12,6 @@ const char *YL_MSG_DISCOVER = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1982
 
 /////////////////////// YBulb ///////////////////////
 
-// To create a bulb, pass its ID and IP-address
-YBulb::YBulb(const char *yid, const char *yip, const uint16_t yport = 55443) :
-  port(yport), power(false), active(false) {
-  memset(id, 0, sizeof(id));
-  if (yid)
-    strncpy(id, yid, sizeof(id) - 1);
-  memset(ip, 0, sizeof(ip));
-  if (yip)
-    strncpy(ip, yip, sizeof(ip) - 1);
-  memset(name, 0, sizeof(name));
-  memset(model, 0, sizeof(model));
-}
-
-void YBulb::SetName(const char *yname) {
-  if (yname) {
-    memset(name, 0, sizeof(name));
-    strncpy(name, yname, sizeof(name) - 1);
-  }
-}
-
-void YBulb::SetModel(const char *ymodel) {
-  if (ymodel) {
-    memset(model, 0, sizeof(model));
-    strncpy(model, ymodel, sizeof(model) - 1);
-  }
-}
-
 int YBulb::Flip(WiFiClient &wfc) const {
   if (wfc.connect(ip, port)) {
     wfc.print(YL_MSG_TOGGLE);
@@ -119,49 +92,41 @@ bool YDiscovery::send() {
 
 // Receive discovery reply
 YBulb *YDiscovery::receive() {
-  const unsigned int MAX_DISCOVERY_REPLY_SIZE = 512; // With contemporary bulbs, the reply is about 500 bytes
-  char discovery_reply[MAX_DISCOVERY_REPLY_SIZE];    // Buffer to hold one discovery reply
   YBulb *new_bulb = nullptr;
+  String reply;
+  if (!reply.reserve(MAX_REPLY_SIZE))  // Reserve sufficient buffer for reply
+    return new_bulb;
 
-  while (isInProgress()) {
-    int len = udp.parsePacket();
+  while (isInProgress() && !new_bulb) {
+    auto len = udp.parsePacket();
     if (len > 0) {
-      len = udp.read(discovery_reply, sizeof(discovery_reply));
+      len = udp.read(const_cast<char *>(reply.c_str()), MAX_REPLY_SIZE);   // Note: hacking into String - manual says this is unsafe, but let's assume we know what we're doing
       if (len > 0) {
-        discovery_reply[len] = 0;
-
-        char *line_ctx, *host = nullptr, *port = nullptr;
-        char *token = strtok_r(discovery_reply, "\r\n", &line_ctx);
-        while (token) {
-          char hostport[24];
-
-          if (!strncmp(token, "Location: ", 10)) {
-            if (strtok(token, "/")) {
-              memset(hostport, 0, sizeof(hostport));
-              strncpy(hostport, strtok(nullptr, "/"), sizeof(hostport) - 1);
-            }
-          } else if (!strncmp(token, "id: ", 4)) {
-            strtok(token, " ");
-            token = strtok(nullptr, " ");
-            host = strtok(hostport, ":");
-            port = strtok(nullptr, ":");
-            if (host && port) {
-              new_bulb = new YBulb(token, host, atoi(port));
-            }
-          } else if (!strncmp(token, "model: ", 7)) {
-            if (strtok(token, " ") && new_bulb)
-              new_bulb->SetModel(strtok(nullptr, " "));
-          } else if (!strncmp(token, "name: ", 6)) {
-            if (strtok(token, " ") && new_bulb)
-              new_bulb->SetName(strtok(nullptr, " "));  // Currently, Yeelights always seem to return an empty name here :(
-          } else if (!strncmp(token, "power: ", 7)) {
-            if (strtok(token, " ") && new_bulb)
-              new_bulb->SetPower(strcmp(strtok(nullptr, " "), "off"));
-          }
-          token = strtok_r(nullptr, "\r\n", &line_ctx);
+        reply.setCharAt(len < (int) MAX_REPLY_SIZE ? len : MAX_REPLY_SIZE - 1, '\0');  // Null-terminate
+        String host;
+        String port;
+        while (true) {
+          const auto idx = reply.indexOf("\r\n");
+          if (idx == -1)
+            break;
+          auto line = reply.substring(0, idx);
+          reply.remove(0, idx + 1);
+          if (line.startsWith("Location: yeelight://")) {
+            line.remove(0, line.indexOf('/') + 2);
+            host = line.substring(0, line.indexOf(':'));
+            port = line.substring(line.indexOf(':') + 1);
+          } else if (line.startsWith("id: ")) {
+            const String id = line.substring(4);
+            if (id && host && port)
+              new_bulb = new YBulb(id, host, port.toInt());
+          } else if (line.startsWith("model: ") && new_bulb)
+            new_bulb->SetModel(line.substring(7));
+          else if (line.startsWith("name: ") && new_bulb)
+            new_bulb->SetName(line.substring(6));  // Currently, Yeelights always seem to return an empty name here :(
+          else if (line.startsWith("power: ") && new_bulb)
+            new_bulb->SetPower(line.substring(7) == "on");
         }
       }
-      break;
     }
   }
   return new_bulb;
