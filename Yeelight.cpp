@@ -93,42 +93,42 @@ bool YDiscovery::send() {
 // Receive discovery reply
 YBulb *YDiscovery::receive() {
   YBulb *new_bulb = nullptr;
-  String reply;
-  if (!reply.reserve(MAX_REPLY_SIZE))  // Reserve sufficient buffer for reply
+  auto reply_buffer = new char[MAX_REPLY_SIZE + 1];
+  if (!reply_buffer)
     return new_bulb;
-
   while (isInProgress() && !new_bulb) {
-    auto len = udp.parsePacket();
-    if (len > 0) {
-      len = udp.read(const_cast<char *>(reply.c_str()), MAX_REPLY_SIZE);   // Note: hacking into String - manual says this is unsafe, but let's assume we know what we're doing
-      if (len > 0) {
-        reply.setCharAt(len < (int) MAX_REPLY_SIZE ? len : MAX_REPLY_SIZE - 1, '\0');  // Null-terminate
-        String host;
-        String port;
-        while (true) {
-          const auto idx = reply.indexOf("\r\n");
-          if (idx == -1)
-            break;
-          auto line = reply.substring(0, idx);
-          reply.remove(0, idx + 1);
-          if (line.startsWith("Location: yeelight://")) {
-            line.remove(0, line.indexOf('/') + 2);
-            host = line.substring(0, line.indexOf(':'));
-            port = line.substring(line.indexOf(':') + 1);
-          } else if (line.startsWith("id: ")) {
-            const String id = line.substring(4);
-            if (id && host && port)
-              new_bulb = new YBulb(id, host, port.toInt());
-          } else if (line.startsWith("model: ") && new_bulb)
-            new_bulb->SetModel(line.substring(7));
-          else if (line.startsWith("name: ") && new_bulb)
-            new_bulb->SetName(line.substring(6));  // Currently, Yeelights always seem to return an empty name here :(
-          else if (line.startsWith("power: ") && new_bulb)
-            new_bulb->SetPower(line.substring(7) == "on");
-        }
-      }
+    if (!udp.parsePacket())
+      continue;
+    const auto len = udp.read(reply_buffer, MAX_REPLY_SIZE);
+    if (len <= 0)
+      continue;
+    reply_buffer[len] = '\0';  // Null-terminate
+    String reply(reply_buffer);
+    String host;
+    String port;
+    while (true) {
+      const auto idx = reply.indexOf("\r\n");
+      if (idx == -1)
+        break;
+      auto line = reply.substring(0, idx);
+      reply.remove(0, idx + 2);
+      if (line.startsWith("Location: yeelight://")) {
+        line.remove(0, line.indexOf('/') + 2);
+        host = line.substring(0, line.indexOf(':'));
+        port = line.substring(line.indexOf(':') + 1);
+      } else if (line.startsWith("id: ")) {
+        const String id = line.substring(4);
+        if (id && host && port)
+          new_bulb = new YBulb(id, host, port.toInt());
+      } else if (line.startsWith("model: ") && new_bulb)
+        new_bulb->SetModel(line.substring(7));
+      else if (line.startsWith("name: ") && new_bulb)
+        new_bulb->SetName(line.substring(6));  // Currently, Yeelights always seem to return an empty name here :(
+      else if (line.startsWith("power: ") && new_bulb)
+        new_bulb->SetPower(line.substring(7) == "on");
     }
   }
+  delete [] reply_buffer;
   return new_bulb;
 }
 
