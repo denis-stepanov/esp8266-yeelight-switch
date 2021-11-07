@@ -10,7 +10,6 @@
 #include <WiFiUdp.h>              // UDP support
 
 // FIXME descriptions
-// FIXME camelCase
 
 // Yeelight bulb object. TODO: make a true library out of this
 class YBulb {
@@ -34,20 +33,20 @@ class YBulb {
       id(yid), ip(yip), port(yport), power(false), active(false) {}
     ~YBulb(){};
 
-    const String& GetID() const { return id; }
-    const String& GetIP() const { return ip; }
+    const String& getID() const { return id; }
+    const String& getIP() const { return ip; }
     // TODO: setIP()?
-    uint16_t GetPort() const { return port; }
-    const String& GetName() const { return name; }
-    void SetName(const String& yname) { name = yname; }
-    const String& GetModel() const { return model; }
-    void SetModel(const String& ymodel) { model = ymodel; }
-    bool GetPower() const { return power; }
-    void SetPower(bool new_power) { power = new_power; }
+    uint16_t getPort() const { return port; }
+    const String& getName() const { return name; }
+    void setName(const String& yname) { name = yname; }
+    const String& getModel() const { return model; }
+    void setModel(const String& ymodel) { model = ymodel; }
+    bool getPower() const { return power; }
+    void setPower(bool new_power) { power = new_power; }
     bool isActive() const { return active; }
-    void Activate() { active = true; }
-    void Deactivate() { active = false; }
-    int Flip(WiFiClient&) const;
+    void activate() { active = true; }
+    void deactivate() { active = false; }
+    int flip(WiFiClient&) const;
     void printStatusHTML(String&) const;         // Print bulb status in HTML
     void printConfHTML(String&, uint8_t) const;  // Print bulb configuration controls in HTML
     bool operator==(const String& id2) const {

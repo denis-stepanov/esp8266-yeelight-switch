@@ -43,7 +43,7 @@ void BulbManager::load() {
       for (uint8_t j = 0; j < bulbs.size(); j++) {
         YBulb *bulb = bulbs.get(j);
         if (*bulb == bulbid_c) {
-          bulb->Activate();
+          bulb->activate();
           break;
         }
       }
@@ -80,10 +80,10 @@ void BulbManager::save() {
       if (n < bulbs.size()) {
         YBulb *bulb = bulbs.get(n);
         char bulbid_c[YBulb::ID_LENGTH + 1] = {0,};
-        strncpy(bulbid_c, bulb->GetID().c_str(), YBulb::ID_LENGTH);
+        strncpy(bulbid_c, bulb->getID().c_str(), YBulb::ID_LENGTH);
         EEPROM.put(eeprom_addr, bulbid_c);
         eeprom_addr += sizeof(bulbid_c);
-        bulb->Activate();
+        bulb->activate();
       } else
         System::log->printf(TIMED("Bulb #%d does not exist\n"), n);
     }
@@ -131,19 +131,19 @@ uint8_t BulbManager::discover() {
     // TODO: add search function
     for (uint8_t i = 0; i < bulbs.size(); i++) {
       YBulb *bulb = bulbs.get(i);
-      if (*bulb == discovered_bulb->GetID()) {
+      if (*bulb == discovered_bulb->getID()) {
         new_bulb = bulb;
         break;
       }
     }
     if (new_bulb) {
-      System::log->printf(TIMED("Received bulb id: %s is already registered; ignoring\n"), discovered_bulb->GetID().c_str());
+      System::log->printf(TIMED("Received bulb id: %s is already registered; ignoring\n"), discovered_bulb->getID().c_str());
       delete discovered_bulb;
     } else {
       bulbs.add(discovered_bulb);
       System::log->printf(TIMED("Registered bulb id: %s, name: %s, model: %s, power: %s\n"),
-        discovered_bulb->GetID().c_str(), discovered_bulb->GetName().c_str(),
-        discovered_bulb->GetModel().c_str(), discovered_bulb->GetPower() ? "on" : "off");
+        discovered_bulb->getID().c_str(), discovered_bulb->getName().c_str(),
+        discovered_bulb->getModel().c_str(), discovered_bulb->getPower() ? "on" : "off");
     }
   }
   
@@ -158,8 +158,8 @@ int BulbManager::flip() {
     for (uint8_t i = 0; i < bulbs.size(); i++) {
       YBulb *bulb = bulbs.get(i);
       if (bulb && bulb->isActive()) {
-        if (bulb->Flip(client)) {
-          System::log->printf(TIMED("Bulb connection to %s failed\n"), bulb->GetIP().c_str());
+        if (bulb->flip(client)) {
+          System::log->printf(TIMED("Bulb connection to %s failed\n"), bulb->getIP().c_str());
           ret = -2;
           yield();        // Connection timeout is lenghty; allow for background processing (is this really needed?)
         } else
@@ -176,14 +176,14 @@ int BulbManager::flip() {
 // Activate all bulbs
 void BulbManager::activateAll() {
   for (uint8_t i = 0; i < bulbs.size(); i++)
-    bulbs.get(i)->Activate();
+    bulbs.get(i)->activate();
   nabulbs = 0;    
 }
 
 // Deactivate all bulbs
 void BulbManager::deactivateAll() {
   for (uint8_t i = 0; i < bulbs.size(); i++)
-    bulbs.get(i)->Deactivate();
+    bulbs.get(i)->deactivate();
   nabulbs = 0;  
 }
 

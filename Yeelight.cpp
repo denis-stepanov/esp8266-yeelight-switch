@@ -12,7 +12,7 @@ const char *YL_MSG_DISCOVER = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1982
 
 /////////////////////// YBulb ///////////////////////
 
-int YBulb::Flip(WiFiClient &wfc) const {
+int YBulb::flip(WiFiClient &wfc) const {
   if (wfc.connect(ip, port)) {
     wfc.print(YL_MSG_TOGGLE);
     wfc.stop();
@@ -121,11 +121,11 @@ YBulb *YDiscovery::receive() {
         if (id && host && port)
           new_bulb = new YBulb(id, host, port.toInt());
       } else if (line.startsWith("model: ") && new_bulb)
-        new_bulb->SetModel(line.substring(7));
+        new_bulb->setModel(line.substring(7));
       else if (line.startsWith("name: ") && new_bulb)
-        new_bulb->SetName(line.substring(6));  // Currently, Yeelights always seem to return an empty name here :(
+        new_bulb->setName(line.substring(6));  // Currently, Yeelights always seem to return an empty name here :(
       else if (line.startsWith("power: ") && new_bulb)
-        new_bulb->SetPower(line.substring(7) == "on");
+        new_bulb->setPower(line.substring(7) == "on");
     }
   }
   delete [] reply_buffer;
