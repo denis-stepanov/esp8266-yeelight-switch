@@ -51,6 +51,9 @@ class YBulb {
     bool operator==(const String& id2) const {   // Bulb comparison
       return id == id2;
     }
+    bool operator==(const YBulb& yb) const {     // Bulb comparison
+      return *this == yb.getID();
+    }
 };
 
 // Yeelight discovery

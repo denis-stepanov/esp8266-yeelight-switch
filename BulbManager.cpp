@@ -131,7 +131,7 @@ uint8_t BulbManager::discover() {
     // TODO: add search function
     for (uint8_t i = 0; i < bulbs.size(); i++) {
       YBulb *bulb = bulbs.get(i);
-      if (*bulb == discovered_bulb->getID()) {
+      if (*bulb == *discovered_bulb) {
         new_bulb = bulb;
         break;
       }
