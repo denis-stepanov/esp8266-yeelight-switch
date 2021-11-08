@@ -15,7 +15,7 @@ class YBulb {
   protected:
 
     String id;                                   // Yeelight device ID
-    String ip;                                   // IP-address of the bulb
+    IPAddress ip;                                // IP-address of the bulb
     uint16_t port;                               // Port of the bulb
     String name;                                 // Bulb name
     String model;                                // Bulb model ("color", "stripe", etc)
@@ -27,13 +27,13 @@ class YBulb {
     static const uint8_t ID_LENGTH = 18;         // Length of the Yeelight device ID (chars)
     static const uint16_t TIMEOUT = 1000;        // Bulb connection timeout (ms)
 
-    YBulb(const String& yid, const String& yip = "", const uint16_t yport = 55443) :
+    YBulb(const String& yid, const IPAddress& yip = 0, const uint16_t yport = 55443) :
       id(yid), ip(yip), port(yport), power(false), active(false) {}      // Constructor
     virtual ~YBulb() {}                          // Destructor
 
     const String& getID() const { return id; }   // Return bulb ID
-    const String& getIP() const { return ip; }   // Return bulb IP-address
-    void setIP(const String& yip) { ip = yip; }  // Set bulb IP-address
+    const IPAddress& getIP() const { return ip; }            // Return bulb IP-address
+    void setIP(const IPAddress& yip) { ip = yip; }           // Set bulb IP-address
     uint16_t getPort() const { return port; }    // Return bulb port
     const String& getName() const { return name; }           // Return bulb name
     void setName(const String& yname) { name = yname; }      // Set bulb name

@@ -159,7 +159,7 @@ int BulbManager::flip() {
       YBulb *bulb = bulbs.get(i);
       if (bulb && bulb->isActive()) {
         if (bulb->flip(client)) {
-          System::log->printf(TIMED("Bulb connection to %s failed\n"), bulb->getIP().c_str());
+          System::log->printf(TIMED("Bulb connection to %s failed\n"), bulb->getIP().toString().c_str());
           ret = -2;
           yield();        // Connection timeout is lenghty; allow for background processing (is this really needed?)
         } else

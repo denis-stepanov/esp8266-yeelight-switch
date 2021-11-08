@@ -28,7 +28,7 @@ void YBulb::printStatusHTML(String& str) const {
   str += "<li>id(";
   str += id;
   str += "), ip(";
-  str += ip;
+  str += ip.toString();
   str += "), name(";
   str += name;
   str += "), model(";
@@ -44,7 +44,7 @@ void YBulb::printConfHTML(String& str, uint8_t num) const {
   if (active)
     str += " checked";
   str += "/> ";
-  str += ip;
+  str += ip.toString();
   str += " id(";
   str += id;
   str += ") name(";
@@ -105,8 +105,8 @@ YBulb *YDiscovery::receive() {
       continue;
     reply_buffer[len] = '\0';  // Null-terminate
     String reply(reply_buffer);
-    String host;
-    String port;
+    IPAddress host;
+    uint16_t port = 0;
     while (true) {
       const auto idx = reply.indexOf("\r\n");
       if (idx == -1)
@@ -115,12 +115,12 @@ YBulb *YDiscovery::receive() {
       reply.remove(0, idx + 2);
       if (line.startsWith("Location: yeelight://")) {
         line.remove(0, line.indexOf('/') + 2);
-        host = line.substring(0, line.indexOf(':'));
-        port = line.substring(line.indexOf(':') + 1);
+        host.fromString(line.substring(0, line.indexOf(':')));
+        port = line.substring(line.indexOf(':') + 1).toInt();
       } else if (line.startsWith("id: ")) {
         const String id = line.substring(4);
-        if (id && host && port)
-          new_bulb = new YBulb(id, host, port.toInt());
+        if (!id.isEmpty() && host && port)
+          new_bulb = new YBulb(id, host, port);
       } else if (line.startsWith("model: ") && new_bulb)
         new_bulb->setModel(line.substring(7));
       else if (line.startsWith("name: ") && new_bulb)
