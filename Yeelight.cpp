@@ -12,6 +12,7 @@ const char *YL_MSG_DISCOVER = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1982
 
 /////////////////////// YBulb ///////////////////////
 
+// Toggle bulb power state
 int YBulb::flip(WiFiClient &wfc) const {
   if (wfc.connect(ip, port)) {
     wfc.print(YL_MSG_TOGGLE);
