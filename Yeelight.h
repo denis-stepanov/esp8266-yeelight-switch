@@ -63,7 +63,7 @@ class YDiscovery {
 
   public:
 
-    const size_t MAX_REPLY_SIZE = 512;           // With contemporary bulbs, the reply is about 500 bytes
+    static const size_t MAX_REPLY_SIZE = 512;    // With contemporary bulbs, the reply is about 500 bytes
     static const unsigned long TIMEOUT = 3000;   // Discovery timeout (ms)
 
     YDiscovery();                                // Constructor
