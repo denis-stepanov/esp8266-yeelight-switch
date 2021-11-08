@@ -143,7 +143,7 @@ uint8_t BulbManager::discover() {
       bulbs.add(discovered_bulb);
       System::log->printf(TIMED("Registered bulb id: %s, name: %s, model: %s, power: %s\n"),
         discovered_bulb->getID().c_str(), discovered_bulb->getName().c_str(),
-        discovered_bulb->getModel().c_str(), discovered_bulb->getPower() ? "on" : "off");
+        discovered_bulb->getModel().c_str(), discovered_bulb->getPowerStr().c_str());
     }
   }
   

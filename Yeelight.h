@@ -40,6 +40,7 @@ class YBulb {
     const String& getModel() const { return model; }         // Return bulb model
     void setModel(const String& ymodel) { model = ymodel; }  // Set bulb model
     bool getPower() const { return power; }      // Return bulb power state (true = "on")
+    String getPowerStr() const { return power ? F("on") : F("off"); } // Return bulb power state as string
     void setPower(bool new_power) { power = new_power; }     // Set bulb power state (true = "on")
     void setPower(const String& new_power) { power = new_power == F("on"); } // Set bulb power state from string ("on" or "off")
     bool isActive() const { return active; }     // True if bulb control is active
