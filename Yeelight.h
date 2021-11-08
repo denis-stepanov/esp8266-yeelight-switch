@@ -29,7 +29,7 @@ class YBulb {
 
     YBulb(const String& yid, const String& yip, const uint16_t yport = 55443) :
       id(yid), ip(yip), port(yport), power(false), active(false) {}      // Constructor
-    ~YBulb(){};
+    virtual ~YBulb() {}                          // Destructor
 
     const String& getID() const { return id; }   // Return bulb ID
     const String& getIP() const { return ip; }   // Return bulb IP-address
@@ -67,6 +67,7 @@ class YDiscovery {
     static const unsigned long TIMEOUT = 3000;   // Discovery timeout (ms)
 
     YDiscovery();                                // Constructor
+    virtual ~YDiscovery() {}                     // Destructor
     bool send();                                 // Send discovery request
     YBulb *receive();                            // Receive discovery reply
     bool isInProgress();                         // True if discovery process is in progress
