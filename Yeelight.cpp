@@ -126,7 +126,7 @@ YBulb *YDiscovery::receive() {
       else if (line.startsWith("name: ") && new_bulb)
         new_bulb->setName(line.substring(6));  // Currently, Yeelights always seem to return an empty name here :(
       else if (line.startsWith("power: ") && new_bulb)
-        new_bulb->setPower(line.substring(7) == "on");
+        new_bulb->setPower(line.substring(7));
     }
   }
   delete [] reply_buffer;
