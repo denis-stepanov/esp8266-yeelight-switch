@@ -59,6 +59,8 @@ void YBulb::printConfHTML(String& str, uint8_t num) const {
 
 //////////////////// YDiscovery /////////////////////
 
+const IPAddress YDiscovery::SSDP_MULTICAST_ADDR(239, 255, 255, 250);
+
 // Constructor
 YDiscovery::YDiscovery() {
   t0 = millis();
@@ -67,14 +69,11 @@ YDiscovery::YDiscovery() {
 
 // Send discovery request
 bool YDiscovery::send() {
-  const IPAddress upnp_ip(239, 255, 255, 250);     // Yeelight is using a flavor of UPnP protocol
-  const uint16_t upnp_port_yeelight = 1982;        // but the port is different from standard
-  const int upnp_ttl = 32;                         // TTL
   auto ret = true;                                 // Return code
 
   // Send broadcast message
   udp.stop();
-  ret = udp.beginPacketMulticast(upnp_ip, upnp_port_yeelight, WiFi.localIP(), upnp_ttl);
+  ret = udp.beginPacketMulticast(SSDP_MULTICAST_ADDR, SSDP_PORT, WiFi.localIP(), 32);
   if (ret) {
     ret = udp.write(YL_MSG_DISCOVER, strlen(YL_MSG_DISCOVER));
     if (ret) {
@@ -94,13 +93,13 @@ bool YDiscovery::send() {
 // Receive discovery reply
 YBulb *YDiscovery::receive() {
   YBulb *new_bulb = nullptr;
-  auto reply_buffer = new char[MAX_REPLY_SIZE + 1];
+  auto reply_buffer = new char[SSDP_BUFFER_SIZE + 1];
   if (!reply_buffer)
     return new_bulb;
   while (isInProgress() && !new_bulb) {
     if (!udp.parsePacket())
       continue;
-    const auto len = udp.read(reply_buffer, MAX_REPLY_SIZE);
+    const auto len = udp.read(reply_buffer, SSDP_BUFFER_SIZE);
     if (len <= 0)
       continue;
     reply_buffer[len] = '\0';  // Null-terminate
