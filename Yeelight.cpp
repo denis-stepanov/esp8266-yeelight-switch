@@ -7,9 +7,18 @@
 #include <ESP8266WiFi.h>                   // Wi-Fi support
 
 // Yeelight protocol; see https://www.yeelight.com/en_US/developer
+
+// Some black magic to avoid defining multicast address twice
+#define _comma ,
+#define _ssdp_multicast_addr(dot) 239 dot 255 dot 255 dot 250
+#define _ssdp_multicast_addr_comma _ssdp_multicast_addr(_comma)
+#define _ssdp_multicast_addr_str __XSTRING(_ssdp_multicast_addr(.))
+#define _ssdp_port 1982
+#define _ssdp_port_str __STRING(_ssdp_port)
+
 static const char *YL_MSG_DISCOVER PROGMEM =
   "M-SEARCH * HTTP/1.1\r\n"
-  "HOST: 239.255.255.250:1982\r\n"
+  "HOST: " _ssdp_multicast_addr_str ":" _ssdp_port_str "\r\n"
   "MAN: \"ssdp:discover\"\r\n"
   "ST: wifi_bulb";
 
@@ -68,7 +77,8 @@ void YBulb::printConfHTML(String& str, uint8_t num) const {
 
 //////////////////// YDiscovery /////////////////////
 
-const IPAddress YDiscovery::SSDP_MULTICAST_ADDR(239, 255, 255, 250);
+const IPAddress YDiscovery::SSDP_MULTICAST_ADDR(_ssdp_multicast_addr_comma);
+const uint16_t YDiscovery::SSDP_PORT = _ssdp_port;
 
 // Constructor
 YDiscovery::YDiscovery() {

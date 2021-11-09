@@ -69,7 +69,7 @@ class YDiscovery {
   public:
 
     static const IPAddress SSDP_MULTICAST_ADDR;  // Yeelight is using a flavor of SSDP protocol
-    static const uint16_t SSDP_PORT = 1982;      // ... but the port is different from standard
+    static const uint16_t SSDP_PORT;             // ... but the port is different from standard
     static const size_t SSDP_BUFFER_SIZE = 512;  // With contemporary bulbs, the reply is about 500 bytes
     static const unsigned long TIMEOUT = 3000;   // Discovery timeout (ms)
 
