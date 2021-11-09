@@ -7,15 +7,24 @@
 #include <ESP8266WiFi.h>                   // Wi-Fi support
 
 // Yeelight protocol; see https://www.yeelight.com/en_US/developer
-const char *YL_MSG_TOGGLE = "{\"id\":1,\"method\":\"toggle\",\"params\":[]}\r\n";
-const char *YL_MSG_DISCOVER = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1982\r\nMAN: \"ssdp:discover\"\r\nST: wifi_bulb";
+static const char *YL_MSG_DISCOVER PROGMEM =
+  "M-SEARCH * HTTP/1.1\r\n"
+  "HOST: 239.255.255.250:1982\r\n"
+  "MAN: \"ssdp:discover\"\r\n"
+  "ST: wifi_bulb";
+
+static const char *YL_MSG_TOGGLE PROGMEM =
+  "{\"id\":1,"
+   "\"method\":\"toggle\","
+   "\"params\":[]"
+  "}\r\n";
 
 /////////////////////// YBulb ///////////////////////
 
 // Toggle bulb power state
 int YBulb::flip(WiFiClient &wfc) const {
   if (wfc.connect(ip, port)) {
-    wfc.print(YL_MSG_TOGGLE);
+    wfc.print(FPSTR(YL_MSG_TOGGLE));
     wfc.stop();
     return 0;
   } else
@@ -69,13 +78,14 @@ YDiscovery::YDiscovery() {
 
 // Send discovery request
 bool YDiscovery::send() {
-  auto ret = true;                                 // Return code
+  auto ret = true;
+  const String discovery_msg(FPSTR(YL_MSG_DISCOVER)); // Preload the message from flash, as WiFiUDP cannot work with flash directly
 
   // Send broadcast message
   udp.stop();
   ret = udp.beginPacketMulticast(SSDP_MULTICAST_ADDR, SSDP_PORT, WiFi.localIP(), 32);
   if (ret) {
-    ret = udp.write(YL_MSG_DISCOVER, strlen(YL_MSG_DISCOVER));
+    ret = udp.write(discovery_msg.c_str(), discovery_msg.length());
     if (ret) {
       ret = udp.endPacket();
       if (ret) {
