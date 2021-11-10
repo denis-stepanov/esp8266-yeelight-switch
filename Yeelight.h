@@ -24,7 +24,7 @@ class YBulb {
 
   public:
 
-    static const uint8_t ID_LENGTH = 18;         // Length of the Yeelight device ID (chars)
+    static const size_t ID_LENGTH = 18;         // Length of the Yeelight device ID (chars)
     static const uint16_t TIMEOUT = 1000;        // Bulb connection timeout (ms)
 
     YBulb(const String& yid, const IPAddress& yip = 0, const uint16_t yport = 55443) :
