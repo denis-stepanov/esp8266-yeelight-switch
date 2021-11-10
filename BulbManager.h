@@ -28,7 +28,7 @@ class BulbManager {
     void load();                           // Load stored configuration
     void save();                           // Save new configuration
     uint8_t discover();                    // Discover bulbs
-    int flip();                            // Flip bulbs
+    bool flip();                           // Flip bulbs. Returns true on full success
     void activateAll();                    // Activate all bulbs
     void deactivateAll();                  // Deactivate all bulbs
     uint8_t getNum() const { return const_cast<BulbManager *>(this)->bulbs.size(); }  // Return number of known bulbs

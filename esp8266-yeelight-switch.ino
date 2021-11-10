@@ -79,7 +79,7 @@ void loop() {
         delay(BLINK_DELAY);       // 1 blink
         System::led.Off().Update();
 
-        if (bulb_manager.flip())
+        if (!bulb_manager.flip())
 
           // Some bulbs did not respond
           // Because of connection timeout, the blinking will be 1 + pause + 2

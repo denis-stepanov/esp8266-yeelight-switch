@@ -30,14 +30,14 @@ static const char *YL_MSG_TOGGLE PROGMEM =
 
 /////////////////////// YBulb ///////////////////////
 
-// Toggle bulb power state
-int YBulb::flip(WiFiClient &wfc) const {
+// Toggle bulb power state. Returns true on success
+bool YBulb::flip(WiFiClient &wfc) const {
   if (wfc.connect(ip, port)) {
     wfc.print(FPSTR(YL_MSG_TOGGLE));
     wfc.stop();
-    return 0;
+    return true;
   } else
-    return -1;
+    return false;
 }
 
 // Print bulb status in HTML

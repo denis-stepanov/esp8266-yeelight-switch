@@ -151,24 +151,25 @@ uint8_t BulbManager::discover() {
   return bulbs.size();
 }
 
-// Yeelight bulb flip
-int BulbManager::flip() {
-  int ret = 0;
+// Flip bulbs. Returns true on full success
+bool BulbManager::flip() {
+  auto ret = true;
   if (nabulbs) {
     for (uint8_t i = 0; i < bulbs.size(); i++) {
       YBulb *bulb = bulbs.get(i);
       if (bulb && bulb->isActive()) {
-        if (bulb->flip(client)) {
-          System::log->printf(TIMED("Bulb connection to %s failed\n"), bulb->getIP().toString().c_str());
-          ret = -2;
-          yield();        // Connection timeout is lenghty; allow for background processing (is this really needed?)
-        } else
+        if (bulb->flip(client))
           System::log->printf(TIMED("Bulb %d toggle sent\n"), i + 1);
+        else {
+          System::log->printf(TIMED("Bulb connection to %s failed\n"), bulb->getIP().toString().c_str());
+          ret = false;
+          yield();        // Connection timeout is lenghty; allow for background processing (is this really needed?)
+        }
       }
     }
   } else {
     System::log->printf(TIMED("No linked bulbs found\n"));
-    ret = -1;
+    ret = false;
   }
   return ret;
 }
