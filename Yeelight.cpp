@@ -68,7 +68,7 @@ void YBulb::printConfHTML(String& str, uint8_t num) const {
   str += num;
   str += "\"";
   if (active)
-    str += " checked";
+    str += " checked=\"checked\"";
   str += "/> ";
   printHTML(str);
   str += "<br/>\n";
