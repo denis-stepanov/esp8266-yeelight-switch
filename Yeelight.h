@@ -22,6 +22,8 @@ class YBulb {
     bool power;                                  // Current power state (true = "on")
     bool active;                                 // True if the bulb is actively controlled (e.g., linked to a switch)
 
+    void printHTML(String&) const;               // Print bulb info in HTML
+
   public:
 
     static const size_t ID_LENGTH = 18;         // Length of the Yeelight device ID (chars)

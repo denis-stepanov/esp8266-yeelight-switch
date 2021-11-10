@@ -40,10 +40,9 @@ bool YBulb::flip(WiFiClient &wfc) const {
     return false;
 }
 
-// Print bulb status in HTML
-// TODO: synergy between two functions?
-void YBulb::printStatusHTML(String& str) const {
-  str += "<li>id(";
+// Print bulb info in HTML
+void YBulb::printHTML(String& str) const {
+  str += "id(";
   str += id;
   str += "), ip(";
   str += ip.toString();
@@ -51,7 +50,16 @@ void YBulb::printStatusHTML(String& str) const {
   str += name;
   str += "), model(";
   str += model;
-  str += ")</li>";
+  str += "), power(";
+  str += getPowerStr();
+  str += ")";
+}
+
+// Print bulb status in HTML
+void YBulb::printStatusHTML(String& str) const {
+  str += "<li>";
+  printHTML(str);
+  str += "</li>\n";
 }
 
 // Print bulb configuration controls in HTML
@@ -62,16 +70,8 @@ void YBulb::printConfHTML(String& str, uint8_t num) const {
   if (active)
     str += " checked";
   str += "/> ";
-  str += ip.toString();
-  str += " id(";
-  str += id;
-  str += ") name(";
-  str += name;
-  str += ") model(";
-  str += model;
-  str += ") power(";
-  str += power ? "<b>on</b>" : "off";
-  str += ")<br/>";
+  printHTML(str);
+  str += "<br/>\n";
 }
 
 
