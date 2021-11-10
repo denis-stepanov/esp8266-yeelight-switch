@@ -67,7 +67,7 @@ void BulbManager::load() {
 //  4-22: <selected bulb ID> (19 bytes, null-terminated)
 //      : ...
 void BulbManager::save() {
-  unsigned int nargs = System::web_server.args();
+  const auto nargs = System::web_server.args();
   const size_t used_eeprom_size = 2 + 1 + 1 + (YBulb::ID_LENGTH + 1) * nargs;   // TODO: maybe put some constraint on nargs (externally provided parameter)
   EEPROM.begin(used_eeprom_size);
   unsigned int eeprom_addr = 4;
@@ -75,10 +75,10 @@ void BulbManager::save() {
   deactivateAll();
 
   if(nargs) {
-    for(unsigned int i = 0; i < nargs; i++) {
-      unsigned char n = System::web_server.arg(i).c_str()[0] - '0';
+    for(unsigned int i = 0; i < (unsigned int)nargs; i++) {
+      const auto n = System::web_server.arg(i).c_str()[0] - '0';
       if (n < bulbs.size()) {
-        YBulb *bulb = bulbs.get(n);
+        const auto bulb = bulbs.get(n);
         char bulbid_c[YBulb::ID_LENGTH + 1] = {0,};
         strncpy(bulbid_c, bulb->getID().c_str(), YBulb::ID_LENGTH);
         EEPROM.put(eeprom_addr, bulbid_c);
@@ -130,7 +130,7 @@ uint8_t BulbManager::discover() {
     // Check if we already have this bulb in the list
     // TODO: add search function
     for (uint8_t i = 0; i < bulbs.size(); i++) {
-      YBulb *bulb = bulbs.get(i);
+      const auto bulb = bulbs.get(i);
       if (*bulb == *discovered_bulb) {
         new_bulb = bulb;
         break;
@@ -156,7 +156,7 @@ bool BulbManager::flip() {
   auto ret = true;
   if (nabulbs) {
     for (uint8_t i = 0; i < bulbs.size(); i++) {
-      YBulb *bulb = bulbs.get(i);
+      const auto bulb = bulbs.get(i);
       if (bulb && bulb->isActive()) {
         if (bulb->flip(client))
           System::log->printf(TIMED("Bulb %d toggle sent\n"), i + 1);

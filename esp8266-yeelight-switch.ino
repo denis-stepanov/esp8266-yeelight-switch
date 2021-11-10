@@ -30,7 +30,7 @@ using namespace ace_button;
 // Global variables
 const unsigned long BLINK_DELAY = 100;    // (ms)
 const unsigned long GLOW_DELAY = 1000;    // (ms)
-bool button_pressed = false;
+auto button_pressed = false;
 BulbManager bulb_manager;                 // Bulb manager
 
 // Button handler

@@ -88,7 +88,7 @@ void handleSave() {
 
   bulb_manager.save();
 
-  unsigned int nargs = System::web_server.args();
+  const auto nargs = System::web_server.args();
   const auto nabulbs = bulb_manager.getNumActive();
   System::pushHTMLHeader(System::hostname + nabulbs || !nargs ? " saved" : " error");
   System::web_page += "<h3>Yeelight Button Configuration ";
@@ -118,7 +118,7 @@ void handleFlip() {
   lmsg += System::web_server.client().remoteIP().toString();
   System::appLogWriteLn(lmsg);
 
-  System::pushHTMLHeader((String)System::hostname + " flip");
+  System::pushHTMLHeader((const String)System::hostname + " flip");
   System::web_page += "<h3>Yeelight Button Flip</h3>";
   System::web_page += bulb_manager.getNumActive() ? "<p>Light flipped</p>" : "<p>No linked bulbs found</p>";
   System::web_page += "<p>[<a href=\"/flip\">Flip</a>] [<a href=\"..\">Back</a>]</p>";

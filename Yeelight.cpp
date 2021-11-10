@@ -137,7 +137,7 @@ YBulb *YDiscovery::receive() {
         host.fromString(line.substring(0, line.indexOf(':')));
         port = line.substring(line.indexOf(':') + 1).toInt();
       } else if (line.startsWith("id: ")) {
-        const String id = line.substring(4);
+        const auto id = line.substring(4);
         if (!id.isEmpty() && host && port)
           new_bulb = new YBulb(id, host, port);
       } else if (line.startsWith("model: ") && new_bulb)
