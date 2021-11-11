@@ -22,7 +22,7 @@ const char *System::hostname PROGMEM = "ybutton1";   // <hostname>.local in the 
 
 // Normally no need to change below this line
 const char *System::app_name    PROGMEM = "ESP8266 Yeelight Switch";
-const char *System::app_version PROGMEM = "2.0.0-beta.5";
+const char *System::app_version PROGMEM = "2.0.0-beta.6";
 const char *System::app_url     PROGMEM = "https://github.com/denis-stepanov/esp8266-yeelight-switch";
 
 using namespace ace_button;
