@@ -42,36 +42,36 @@ bool YBulb::flip(WiFiClient &wfc) const {
 
 // Print bulb info in HTML
 void YBulb::printHTML(String& str) const {
-  str += "id(";
+  str += F("id(");
   str += id;
-  str += "), ip(";
+  str += F("), ip(");
   str += ip.toString();
-  str += "), name(";
+  str += F("), name(");
   str += name;
-  str += "), model(";
+  str += F("), model(");
   str += model;
-  str += "), power(";
+  str += F("), power(");
   str += getPowerStr();
-  str += ")";
+  str += F(")");
 }
 
 // Print bulb status in HTML
 void YBulb::printStatusHTML(String& str) const {
-  str += "<li>";
+  str += F("<li>");
   printHTML(str);
-  str += "</li>\n";
+  str += F("</li>\n");
 }
 
 // Print bulb configuration controls in HTML
 void YBulb::printConfHTML(String& str, uint8_t num) const {
-  str += "<input type=\"checkbox\" name=\"bulb\" value=\"";
+  str += F("<input type=\"checkbox\" name=\"bulb\" value=\"");
   str += num;
-  str += "\"";
+  str += '"';
   if (active)
-    str += " checked=\"checked\"";
-  str += "/> ";
+    str += F(" checked=\"checked\"");
+  str += F("/> ");
   printHTML(str);
-  str += "<br/>\n";
+  str += F("<br/>\n");
 }
 
 
@@ -127,24 +127,24 @@ YBulb *YDiscovery::receive() {
     IPAddress host;
     uint16_t port = 0;
     while (true) {
-      const auto idx = reply.indexOf("\r\n");
+      const auto idx = reply.indexOf(F("\r\n"));
       if (idx == -1)
         break;
       auto line = reply.substring(0, idx);
       reply.remove(0, idx + 2);
-      if (line.startsWith("Location: yeelight://")) {
+      if (line.startsWith(F("Location: yeelight://"))) {
         line.remove(0, line.indexOf('/') + 2);
         host.fromString(line.substring(0, line.indexOf(':')));
         port = line.substring(line.indexOf(':') + 1).toInt();
-      } else if (line.startsWith("id: ")) {
+      } else if (line.startsWith(F("id: "))) {
         const auto id = line.substring(4);
         if (!id.isEmpty() && host && port)
           new_bulb = new YBulb(id, host, port);
-      } else if (line.startsWith("model: ") && new_bulb)
+      } else if (line.startsWith(F("model: ")) && new_bulb)
         new_bulb->setModel(line.substring(7));
-      else if (line.startsWith("name: ") && new_bulb)
+      else if (line.startsWith(F("name: ")) && new_bulb)
         new_bulb->setName(line.substring(6));  // Currently, Yeelights always seem to return an empty name here :(
-      else if (line.startsWith("power: ") && new_bulb)
+      else if (line.startsWith(F("power: ")) && new_bulb)
         new_bulb->setPower(line.substring(7));
     }
   }
