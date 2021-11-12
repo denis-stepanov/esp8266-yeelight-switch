@@ -30,6 +30,19 @@ uint8_t BulbManager::countActive() {
   return nabulbs;
 }
 
+// Find a bulb by ID
+YBulb* BulbManager::find(const String& id) const {
+  for (const auto bulb : bulbs)
+    if (*bulb == id)
+      return bulb;
+  return nullptr;
+}
+
+// Find a bulb with the same ID
+YBulb* BulbManager::find(const YBulb& bulb) const {
+  return find(bulb.getID());
+}
+
 // Load stored configuration
 void BulbManager::load() {
 
@@ -46,12 +59,9 @@ void BulbManager::load() {
       EEPROM.get(eeprom_addr, bulbid_c);
       eeprom_addr += sizeof(bulbid_c);
 
-      for (auto bulb : bulbs) {
-        if (*bulb == bulbid_c) {
-          bulb->activate();
-          break;
-        }
-      }
+      auto existing_bulb = find(bulbid_c);
+      if (existing_bulb)
+        existing_bulb->activate();
     }
 
     if (countActive() == n)
@@ -130,17 +140,9 @@ uint8_t BulbManager::discover() {
     const auto discovered_bulb = discovery.receive();
     if (!discovered_bulb)
       continue;
-    YBulb *new_bulb = nullptr;
 
     // Check if we already have this bulb in the list
-    // TODO: add search function
-    for (const auto bulb : bulbs) {
-      if (*bulb == *discovered_bulb) {
-        new_bulb = bulb;
-        break;
-      }
-    }
-    if (new_bulb) {
+    if (find(*discovered_bulb)) {
       System::log->printf(TIMED("Received bulb id: %s is already registered; ignoring\n"), discovered_bulb->getID().c_str());
       delete discovered_bulb;
     } else {
