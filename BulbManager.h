@@ -7,14 +7,14 @@
 #define _BULBMANAGER_H_
 
 #include <WiFiClient.h>                    // Wi-Fi communication
-#include <LinkedList.h>                    // https://github.com/ivanseidel/LinkedList
+#include <vector>                          // Dynamic array
 #include "Yeelight.h"                      // Yeelight support
 
 class BulbManager {
 
   protected:
 
-    LinkedList<YBulb *> bulbs;             // List of known bulbs
+    std::vector<YBulb *> bulbs;            // List of known bulbs
     uint8_t nabulbs;                       // Number of active bulbs
     WiFiClient client;                     // Wi-Fi client
 
@@ -25,6 +25,7 @@ class BulbManager {
   public:
 
     BulbManager();                         // Constructor
+    ~BulbManager();                        // Destructor
     void load();                           // Load stored configuration
     void save();                           // Save new configuration
     uint8_t discover();                    // Discover bulbs

@@ -16,11 +16,17 @@ BulbManager::BulbManager(): nabulbs(0) {
   client.setTimeout(YBulb::TIMEOUT);
 }
 
+// Destructor
+BulbManager::~BulbManager() {
+  for (auto bulb : bulbs)
+    delete bulb;
+}
+
 // Count active bulbs
 uint8_t BulbManager::countActive() {
   nabulbs = 0;
-  for (uint8_t i = 0; i < bulbs.size(); i++)
-    nabulbs += bulbs.get(i)->isActive();
+  for (const auto bulb : bulbs)
+    nabulbs += bulb->isActive();
   return nabulbs;
 }
 
@@ -40,8 +46,7 @@ void BulbManager::load() {
       EEPROM.get(eeprom_addr, bulbid_c);
       eeprom_addr += sizeof(bulbid_c);
 
-      for (uint8_t j = 0; j < bulbs.size(); j++) {
-        YBulb *bulb = bulbs.get(j);
+      for (auto bulb : bulbs) {
         if (*bulb == bulbid_c) {
           bulb->activate();
           break;
@@ -67,7 +72,7 @@ void BulbManager::load() {
 //  4-22: <selected bulb ID> (19 bytes, null-terminated)
 //      : ...
 void BulbManager::save() {
-  const auto nargs = System::web_server.args();
+  const unsigned int nargs = System::web_server.args();
   const size_t used_eeprom_size = 2 + 1 + 1 + (YBulb::ID_LENGTH + 1) * nargs;   // TODO: maybe put some constraint on nargs (externally provided parameter)
   EEPROM.begin(used_eeprom_size);
   unsigned int eeprom_addr = 4;
@@ -75,10 +80,10 @@ void BulbManager::save() {
   deactivateAll();
 
   if(nargs) {
-    for(unsigned int i = 0; i < (unsigned int)nargs; i++) {
-      const auto n = System::web_server.arg(i).c_str()[0] - '0';
+    for(unsigned int i = 0; i < nargs; i++) {
+      const unsigned int n = System::web_server.arg(i).c_str()[0] - '0';
       if (n < bulbs.size()) {
-        const auto bulb = bulbs.get(n);
+        const auto bulb = bulbs[n];
         char bulbid_c[YBulb::ID_LENGTH + 1] = {0,};
         strncpy(bulbid_c, bulb->getID().c_str(), YBulb::ID_LENGTH);
         EEPROM.put(eeprom_addr, bulbid_c);
@@ -129,8 +134,7 @@ uint8_t BulbManager::discover() {
 
     // Check if we already have this bulb in the list
     // TODO: add search function
-    for (uint8_t i = 0; i < bulbs.size(); i++) {
-      const auto bulb = bulbs.get(i);
+    for (const auto bulb : bulbs) {
       if (*bulb == *discovered_bulb) {
         new_bulb = bulb;
         break;
@@ -140,7 +144,7 @@ uint8_t BulbManager::discover() {
       System::log->printf(TIMED("Received bulb id: %s is already registered; ignoring\n"), discovered_bulb->getID().c_str());
       delete discovered_bulb;
     } else {
-      bulbs.add(discovered_bulb);
+      bulbs.push_back(discovered_bulb);
       System::log->printf(TIMED("Registered bulb id: %s, name: %s, model: %s, power: %s\n"),
         discovered_bulb->getID().c_str(), discovered_bulb->getName().c_str(),
         discovered_bulb->getModel().c_str(), discovered_bulb->getPowerStr().c_str());
@@ -155,11 +159,10 @@ uint8_t BulbManager::discover() {
 bool BulbManager::flip() {
   auto ret = true;
   if (nabulbs) {
-    for (uint8_t i = 0; i < bulbs.size(); i++) {
-      const auto bulb = bulbs.get(i);
-      if (bulb && bulb->isActive()) {
+    for (const auto bulb : bulbs) {
+      if (bulb->isActive()) {
         if (bulb->flip(client))
-          System::log->printf(TIMED("Bulb %d toggle sent\n"), i + 1);
+          System::log->printf(TIMED("Bulb %s toggle sent\n"), bulb->getID().c_str());
         else {
           System::log->printf(TIMED("Bulb connection to %s failed\n"), bulb->getIP().toString().c_str());
           ret = false;
@@ -176,29 +179,27 @@ bool BulbManager::flip() {
 
 // Activate all bulbs
 void BulbManager::activateAll() {
-  for (uint8_t i = 0; i < bulbs.size(); i++)
-    bulbs.get(i)->activate();
-  nabulbs = 0;    
+  for (auto bulb : bulbs)
+    bulb->activate();
+  nabulbs = bulbs.size();
 }
 
 // Deactivate all bulbs
 void BulbManager::deactivateAll() {
-  for (uint8_t i = 0; i < bulbs.size(); i++)
-    bulbs.get(i)->deactivate();
+  for (auto bulb : bulbs)
+    bulb->deactivate();
   nabulbs = 0;  
 }
 
 // Print bulbs status in HTML
 void BulbManager::printStatusHTML() const {
-  for (uint8_t i = 0; i < const_cast<BulbManager *>(this)->bulbs.size(); i++) {
-    const auto bulb = const_cast<BulbManager *>(this)->bulbs.get(i);
+  for (const auto bulb : bulbs)
     if (bulb->isActive())
       bulb->printStatusHTML(System::web_page);
-  }
 }
 
 // Print bulb configuration controls in HTML
 void BulbManager::printConfHTML() const {
-  for (uint8_t i = 0; i < const_cast<BulbManager *>(this)->bulbs.size(); i++)
-    const_cast<BulbManager *>(this)->bulbs.get(i)->printConfHTML(System::web_page, i);
+  for (uint8_t i = 0; i < bulbs.size(); i++)
+    bulbs[i]->printConfHTML(System::web_page, i);
 }
