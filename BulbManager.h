@@ -32,7 +32,7 @@ class BulbManager {
     bool flip();                           // Flip bulbs. Returns true on full success
     void activateAll();                    // Activate all bulbs
     void deactivateAll();                  // Deactivate all bulbs
-    uint8_t getNum() const { return const_cast<BulbManager *>(this)->bulbs.size(); }  // Return number of known bulbs
+    uint8_t getNum() const { return bulbs.size(); }  // Return number of known bulbs
     uint8_t getNumActive() const { return nabulbs; } // Return number of active bulbs
     void printStatusHTML() const;          // Print bulbs status in HTML
     void printConfHTML() const;            // Print bulb configuration controls in HTML
