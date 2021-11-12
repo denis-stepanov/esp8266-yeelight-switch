@@ -20,7 +20,6 @@ class BulbManager {
 
     static const uint8_t EEPROM_FORMAT_VERSION = 49;  // The first version of the format stored 1 bulb id right after the marker. ID stars with ASCII '0' == 48
 
-    uint8_t countActive();                 // Count active bulbs
     YBulb* find(const String&) const;      // Find a bulb by ID
     YBulb* find(const YBulb&) const;       // Find a bulb with the same ID
 

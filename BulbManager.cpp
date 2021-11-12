@@ -22,14 +22,6 @@ BulbManager::~BulbManager() {
     delete bulb;
 }
 
-// Count active bulbs
-uint8_t BulbManager::countActive() {
-  nabulbs = 0;
-  for (const auto bulb : bulbs)
-    nabulbs += bulb->isActive();
-  return nabulbs;
-}
-
 // Find a bulb by ID
 YBulb* BulbManager::find(const String& id) const {
   for (const auto bulb : bulbs)
@@ -60,11 +52,13 @@ void BulbManager::load() {
       eeprom_addr += sizeof(bulbid_c);
 
       auto existing_bulb = find(bulbid_c);
-      if (existing_bulb)
+      if (existing_bulb) {
+        nabulbs += !existing_bulb->isActive();
         existing_bulb->activate();
+      }
     }
 
-    if (countActive() == n)
+    if (nabulbs == n)
       System::log->printf(TIMED("Successfully linked to %d bulb%s\n"), nabulbs, nabulbs == 1 ? "" : "s");
     else
       System::log->printf(TIMED("Linking completed with %d out of %d bulb%s skipped\n"), n - nabulbs, n, n == 1 ? "" : "s");
@@ -99,11 +93,12 @@ void BulbManager::save() {
         EEPROM.put(eeprom_addr, bulbid_c);
         eeprom_addr += sizeof(bulbid_c);
         bulb->activate();
+        nabulbs++;
       } else
         System::log->printf(TIMED("Bulb #%d does not exist\n"), n);
     }
 
-    if (countActive()) {
+    if (nabulbs) {
 
       // Write the header
       EEPROM.write(0, 'Y');
