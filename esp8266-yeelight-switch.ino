@@ -69,7 +69,7 @@ void loop() {
       System::log->printf(TIMED("No Wi-Fi connection\n"));
       System::led.Breathe(GLOW_DELAY).Repeat(1);            // 1 glowing
     } else {
-      if (bulb_manager.getNumActive()) {
+      if (bulb_manager.isLinked()) {
 
         // Flipping may block, causing JLED-style blink not being properly processed. Hence, force sequential processing (first blink, then flip)
         // To make JLED working smoothly in this case, an asynchronous WiFiClient.connect() method would be needed
