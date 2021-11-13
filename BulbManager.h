@@ -30,7 +30,11 @@ class BulbManager {
     void load();                           // Load stored configuration
     void save();                           // Save new configuration
     uint8_t discover();                    // Discover bulbs. Returns number of known bulbs
+    bool turnOn();                         // Turn on bulbs. Returns true on full success
+    bool turnOff();                        // Turn off bulbs. Returns true on full success
     bool flip();                           // Flip bulbs. Returns true on full success
+    bool isOn() const;                     // Return true if lights are on
+    bool isOff() const { return !isOn(); } // Return true if lights are off
     void activateAll();                    // Activate all bulbs
     void deactivateAll();                  // Deactivate all bulbs
     uint8_t getNum() const { return bulbs.size(); }  // Return number of known bulbs

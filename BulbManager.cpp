@@ -152,6 +152,16 @@ uint8_t BulbManager::discover() {
   return bulbs.size();
 }
 
+// Turn on bulbs. Returns true on full success
+bool BulbManager::turnOn() {
+  return isOn() ? true : flip();
+}
+
+// Turn off bulbs. Returns true on full success
+bool BulbManager::turnOff() {
+  return isOff() ? true : flip();
+}
+
 // Flip bulbs. Returns true on full success
 bool BulbManager::flip() {
   auto ret = true;
@@ -172,6 +182,16 @@ bool BulbManager::flip() {
     ret = false;
   }
   return ret;
+}
+
+// Return true if lights are on
+bool BulbManager::isOn() const {
+
+  // Ignore for now that bulbs could be in discordant states (issue #21). Treat first active bulb state as the global state
+  for (auto bulb : bulbs)
+    if (bulb->isActive())
+      return bulb->getPower();
+  return false;
 }
 
 // Activate all bulbs
