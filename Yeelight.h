@@ -48,7 +48,9 @@ class YBulb {
     virtual bool isActive() const { return active; }     // True if bulb control is active
     virtual void activate() { active = true; }           // Activate bulb control
     virtual void deactivate() { active = false; }        // Deactivate bulb control
-    virtual bool flip(WiFiClient&) const;                // Toggle bulb power state. Returns true on success
+    virtual bool turnOn(WiFiClient&);                    // Turn the bulb on. Returns true on success
+    virtual bool turnOff(WiFiClient&);                   // Turn the bulb off. Returns true on success
+    virtual bool flip(WiFiClient&);                      // Toggle bulb power state. Returns true on success
     virtual void printStatusHTML(String&) const;         // Print bulb status in HTML
     virtual void printConfHTML(String&, uint8_t) const;  // Print bulb configuration controls in HTML
     virtual bool operator==(const String& id2) const {   // Bulb comparison
