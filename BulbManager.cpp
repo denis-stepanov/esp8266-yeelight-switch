@@ -122,7 +122,7 @@ void BulbManager::save() {
   EEPROM.end();
 }
 
-// Discover bulbs
+// Discover bulbs. Returns number of known bulbs
 // Note - no bulb removal at the moment
 uint8_t BulbManager::discover() {
   YDiscovery discovery;                           // Yeelight discovery

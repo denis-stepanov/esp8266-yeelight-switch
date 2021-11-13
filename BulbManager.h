@@ -29,7 +29,7 @@ class BulbManager {
     ~BulbManager();                        // Destructor
     void load();                           // Load stored configuration
     void save();                           // Save new configuration
-    uint8_t discover();                    // Discover bulbs
+    uint8_t discover();                    // Discover bulbs. Returns number of known bulbs
     bool flip();                           // Flip bulbs. Returns true on full success
     void activateAll();                    // Activate all bulbs
     void deactivateAll();                  // Deactivate all bulbs
