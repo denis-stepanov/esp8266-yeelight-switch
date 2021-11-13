@@ -32,6 +32,7 @@ void handleRoot() {
   web_page += "<p>[<a href=\"conf\">Change</a>]";
   if (bulb_manager.getNumActive())
     web_page += " [<a href=\"flip\">Flip</a>]";
+  web_page += " [<a href=\"timers\">Timers</a>]";
   web_page += " [<a href=\"log\">Log</a>]";
   web_page += " [<a href=\"about\">About</a>]";
   web_page += "</p><hr/><p><i>Connected to network ";
