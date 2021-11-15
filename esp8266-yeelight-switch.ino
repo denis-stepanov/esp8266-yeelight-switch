@@ -39,6 +39,40 @@ void handleButtonEvent(AceButton* /* button */, uint8_t eventType, uint8_t /* bu
 }
 void (*System::onButtonPress)(AceButton*, uint8_t, uint8_t) = handleButtonEvent;
 
+// Timer handler
+void myTimerHandler(const TimerAbsolute* timer) {
+
+  String msg("Timer \"");
+  msg += timer->getAction();
+  msg += "\" fired: bulbs are ";
+
+  const auto bulbs_on = bulb_manager.isOn();
+
+  if (timer->getAction() == "light on") {
+    if (bulbs_on)
+      msg += "already ON";
+    else {
+      bulb_manager.turnOn();
+      msg += "going to ON";
+    }
+  }
+  else
+  if (timer->getAction() == "light off") {
+    if (bulbs_on) {
+      bulb_manager.turnOff();
+      msg += "going to OFF";
+    } else
+      msg += "already OFF";
+  }
+  else
+  if (timer->getAction() == "light toggle") {
+    bulb_manager.flip();
+    msg += bulbs_on ? "going to OFF" : "going to ON";
+  }
+  System::appLogWriteLn(msg);
+}
+void (*System::timerHandler)(const TimerAbsolute*) = myTimerHandler;
+
 // Program setup
 void setup() {
   System::begin();
@@ -48,6 +82,11 @@ void setup() {
 
   // Load stored configuration
   bulb_manager.load();
+
+  // Register timer actions
+  System::timer_actions.push_front("light toggle");
+  System::timer_actions.push_front("light off");
+  System::timer_actions.push_front("light on");
 }
 
 // Program loop
