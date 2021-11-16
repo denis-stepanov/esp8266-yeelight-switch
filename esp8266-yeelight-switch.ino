@@ -59,18 +59,13 @@ void loop() {
     // 1 + 2 blinks - one of the bulbs did not respond
     // 2 blinks - button not linked to bulbs
     // 1 glowing - Wi-Fi disconnected
-    if (!System::networkIsConnected()) {
-
-      // No Wi-Fi
-      System::log->printf(TIMED("No Wi-Fi connection\n"));
-      System::led.Breathe(GLOW_DELAY).Repeat(1);            // 1 glowing
-    } else {
+    if (System::networkIsConnected()) {
       if (bulb_manager.isLinked()) {
 
         // Flipping may block, causing JLED-style blink not being properly processed. Hence, force sequential processing (first blink, then flip)
         // To make JLED working smoothly in this case, an asynchronous WiFiClient.connect() method would be needed
         // This is not included in ESP8266 Core (https://github.com/esp8266/Arduino/issues/922), but is available as a separate library (like ESPAsyncTCP)
-        // Since, for this project, it is a minor issue (flip being sent to bulbs with 100 ms delay), we stay with blocking connect()
+        // Since, for this project, it is a minor issue (flip being sent to bulbs with 100 ms delay), we stay with the blocking connect()
         System::led.On().Update();
         delay(BLINK_DELAY);       // 1 blink
         System::led.Off().Update();
@@ -87,6 +82,11 @@ void loop() {
         System::log->printf(TIMED("Button not linked to bulbs\n"));
         System::led.Blink(BLINK_DELAY, BLINK_DELAY * 2).Repeat(2);    // 2 blinks
       }
+    } else {
+
+      // No Wi-Fi
+      System::log->printf(TIMED("No Wi-Fi connection\n"));
+      System::led.Breathe(GLOW_DELAY).Repeat(1);            // 1 glowing
     }
   }
 
