@@ -220,3 +220,6 @@ void BulbManager::printConfHTML() const {
   for (uint8_t i = 0; i < bulbs.size(); i++)
     bulbs[i]->printConfHTML(System::web_page, i);
 }
+
+// Define a singletone-like instance
+BulbManager bulb_manager;           // Global bulb manager

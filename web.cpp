@@ -10,9 +10,6 @@ using namespace ds;
 
 #define web_page System::web_page          // To make the code a bit lighter
 
-// Data providers
-extern BulbManager bulb_manager;           // Bulb manager
-
 // TODO: make auto-redirect from reply pages
 
 // Root page. Show status

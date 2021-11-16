@@ -29,7 +29,6 @@ const char *System::app_url     PROGMEM = "https://github.com/denis-stepanov/esp
 const unsigned long BLINK_DELAY = 100;    // (ms)
 const unsigned long GLOW_DELAY = 1000;    // (ms)
 extern bool button_pressed;               // Button flag
-BulbManager bulb_manager;                 // Bulb manager
 
 // Program setup
 void setup() {

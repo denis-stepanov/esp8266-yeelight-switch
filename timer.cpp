@@ -8,8 +8,6 @@
 
 using namespace ds;
 
-extern BulbManager bulb_manager;           // Bulb manager
-
 // Timer handler
 void myTimerHandler(const TimerAbsolute* timer) {
 

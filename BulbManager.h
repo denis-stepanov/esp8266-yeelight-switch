@@ -44,4 +44,7 @@ class BulbManager {
     void printConfHTML() const;            // Print bulb configuration controls in HTML
 };
 
+// Declare a singletone-like instance
+extern BulbManager bulb_manager;           // Global bulb manager
+
 #endif // _BULBMANAGER_H_
