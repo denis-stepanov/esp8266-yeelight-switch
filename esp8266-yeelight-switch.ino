@@ -18,60 +18,18 @@
 using namespace ds;
 
 // Configuration
-const char *System::hostname PROGMEM = "ybutton1";   // <hostname>.local in the local network. Also SSID of the temporary network for Wi-Fi configuration
+const char *System::hostname    PROGMEM = "ybutton1"; // <hostname>.local in the local network. Also, SSID of the temporary network for Wi-Fi configuration
 
 // Normally no need to change below this line
 const char *System::app_name    PROGMEM = "ESP8266 Yeelight Switch";
 const char *System::app_version PROGMEM = "2.0.0-beta.6";
 const char *System::app_url     PROGMEM = "https://github.com/denis-stepanov/esp8266-yeelight-switch";
 
-using namespace ace_button;
-
 // Global variables
 const unsigned long BLINK_DELAY = 100;    // (ms)
 const unsigned long GLOW_DELAY = 1000;    // (ms)
-auto button_pressed = false;
+extern bool button_pressed;               // Button flag
 BulbManager bulb_manager;                 // Bulb manager
-
-// Button handler
-void handleButtonEvent(AceButton* /* button */, uint8_t eventType, uint8_t /* buttonState */) {
-  button_pressed = eventType == AceButton::kEventPressed;
-}
-void (*System::onButtonPress)(AceButton*, uint8_t, uint8_t) = handleButtonEvent;
-
-// Timer handler
-void myTimerHandler(const TimerAbsolute* timer) {
-
-  String msg("Timer \"");
-  msg += timer->getAction();
-  msg += "\" fired: bulbs are ";
-
-  const auto bulbs_on = bulb_manager.isOn();
-
-  if (timer->getAction() == "light on") {
-    if (bulbs_on)
-      msg += "already ON";
-    else {
-      bulb_manager.turnOn();
-      msg += "going to ON";
-    }
-  }
-  else
-  if (timer->getAction() == "light off") {
-    if (bulbs_on) {
-      bulb_manager.turnOff();
-      msg += "going to OFF";
-    } else
-      msg += "already OFF";
-  }
-  else
-  if (timer->getAction() == "light toggle") {
-    bulb_manager.flip();
-    msg += bulbs_on ? "going to OFF" : "going to ON";
-  }
-  System::appLogWriteLn(msg);
-}
-void (*System::timerHandler)(const TimerAbsolute*) = myTimerHandler;
 
 // Program setup
 void setup() {
@@ -83,7 +41,7 @@ void setup() {
   // Load stored configuration
   bulb_manager.load();
 
-  // Register timer actions
+  // Register supported timer actions
   System::timer_actions.push_front("light toggle");
   System::timer_actions.push_front("light off");
   System::timer_actions.push_front("light on");

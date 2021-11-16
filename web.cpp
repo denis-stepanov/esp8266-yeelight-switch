@@ -136,4 +136,6 @@ void registerPages() {
   System::web_server.on("/save", handleSave);
   System::web_server.on("/flip", handleFlip);
 }
+
+// Install handler
 void (*System::registerWebPages)() = registerPages;
