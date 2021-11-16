@@ -25,8 +25,8 @@ const char *System::app_version PROGMEM = "2.0.0-beta.6";
 const char *System::app_url     PROGMEM = "https://github.com/denis-stepanov/esp8266-yeelight-switch";
 
 // Global variables
-const unsigned long BLINK_DELAY = 100;    // (ms)
-const unsigned long GLOW_DELAY = 1000;    // (ms)
+static const unsigned long BLINK_DELAY = 100;    // (ms)
+static const unsigned long GLOW_DELAY = 1000;    // (ms)
 extern bool button_pressed;               // Button flag
 
 // Program setup
