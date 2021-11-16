@@ -27,6 +27,7 @@ class BulbManager {
 
     BulbManager();                         // Constructor
     ~BulbManager();                        // Destructor
+    void begin();                          // Start operation
     void load();                           // Load stored configuration
     void save();                           // Save new configuration
     uint8_t discover();                    // Discover bulbs. Returns number of known bulbs

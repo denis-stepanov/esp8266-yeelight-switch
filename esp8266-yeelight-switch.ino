@@ -12,7 +12,6 @@
  */
 
 #include "MySystem.h"                      // System-level definitions
-
 #include "BulbManager.h"                   // Bulb manager
 
 using namespace ds;
@@ -32,13 +31,9 @@ extern bool button_pressed;               // Button flag
 
 // Program setup
 void setup() {
+
   System::begin();
-
-  // Run discovery
-  bulb_manager.discover();
-
-  // Load stored configuration
-  bulb_manager.load();
+  bulb_manager.begin();
 
   // Register supported timer actions
   System::timer_actions.push_front("light toggle");

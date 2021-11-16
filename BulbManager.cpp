@@ -35,6 +35,12 @@ YBulb* BulbManager::find(const YBulb& bulb) const {
   return find(bulb.getID());
 }
 
+// Start operation
+void BulbManager::begin() {
+  discover();
+  load();
+}
+
 // Load stored configuration
 void BulbManager::load() {
 
