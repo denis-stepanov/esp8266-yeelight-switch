@@ -10,7 +10,7 @@ using namespace ds;
 
 // Initialize page buffer with page header
 static void pushHeader(const String& title, bool redirect = false) {
-  String &page = System::web_page;
+  auto &page = System::web_page;
 
   System::pushHTMLHeader(title,
     F(
@@ -48,7 +48,7 @@ static void pushFooter() {
 
 // Root page. Show status
 void handleRoot() {
-  String &page = System::web_page;
+  auto &page = System::web_page;
   const auto nabulbs = bulb_manager.getNumActive();
 
   pushHeader("Yeelight Button");
@@ -67,7 +67,7 @@ void handleRoot() {
 
 // Bulb discovery page
 void handleConf() {
-  String &page = System::web_page;
+  auto &page = System::web_page;
 
   pushHeader("Yeelight Button Configuration");
   page += "<p>[<a href=\"/conf\">Rescan</a>] [<a href=\"/save\">Unlink</a>] [<a href=\"..\">Back</a>]</p>";
@@ -97,7 +97,7 @@ void handleConf() {
 
 // Configuration saving page
 void handleSave() {
-  String &page = System::web_page;
+  auto &page = System::web_page;
 
   bulb_manager.save();
 
@@ -122,7 +122,7 @@ void handleSave() {
 
 // Bulb flip page. Accessing this page immediately flips the light
 void handleFlip() {
-  String &page = System::web_page;
+  auto &page = System::web_page;
 
   bulb_manager.flip();
   String lmsg = "Web page flip received from ";
