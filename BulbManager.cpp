@@ -239,7 +239,7 @@ bool BulbManager::turnOff() {
 // Flip bulbs. Returns true on full success
 bool BulbManager::flip() {
   auto ret = true;
-  if (nabulbs) {
+  if (isLinked()) {
     for (const auto bulb : bulbs) {
       if (bulb->isActive()) {
         if (bulb->flip(client))
