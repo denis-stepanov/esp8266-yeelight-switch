@@ -124,13 +124,12 @@ void handleSave() {
 void handleFlip() {
   auto &page = System::web_page;
 
-  bulb_manager.flip();
-  String lmsg = "Web page flip received from ";
-  lmsg += System::web_server.client().remoteIP().toString();
-  System::appLogWriteLn(lmsg);
+  String reason("Web page flip received from ");
+  reason += System::web_server.client().remoteIP().toString();
+  bulb_manager.processEvent(BulbManager::EVENT_FLIP, reason);
 
   pushHeader("Yeelight Button Flip", true);
-  page += bulb_manager.getNumActive() ? "<p>Light flipped</p>" : "<p>No linked bulbs found</p>";
+  page += bulb_manager.isLinked() ? "<p>Light flipped</p>" : "<p>No linked bulbs found</p>";
   pushFooter();
   System::sendWebPage();
 }

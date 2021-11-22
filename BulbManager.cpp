@@ -41,6 +41,74 @@ void BulbManager::begin() {
   load();
 }
 
+// Process external event
+void BulbManager::processEvent(event_t event, const String& reason = "") {
+  const unsigned long BLINK_DELAY = 100;    // (ms)
+  const unsigned long GLOW_DELAY = 1000;    // (ms)
+
+  // LED diagnostics:
+  // 1 blink  - light flip OK
+  // 1 + 2 blinks - one of the bulbs did not respond
+  // 2 blinks - button not linked to bulbs
+  // 1 glowing - Wi-Fi disconnected
+  if (System::networkIsConnected()) {
+    if (isLinked()) {
+
+      // Flipping may block, causing JLED-style blink not being properly processed. Hence, force sequential processing (first blink, then flip)
+      // To make JLED working smoothly in this case, an asynchronous WiFiClient.connect() method would be needed
+      // This is not included in ESP8266 Core (https://github.com/esp8266/Arduino/issues/922), but is available as a separate library (like ESPAsyncTCP)
+      // Since, for this project, it is a minor issue (flip being sent to bulbs with 100 ms delay), we stay with the blocking connect()
+      System::led.On().Update();
+      delay(BLINK_DELAY);       // 1 blink
+      System::led.Off().Update();
+
+      String msg(reason);
+      msg += reason.isEmpty() ? "Bulbs are" : "; bulbs are ";
+      const auto bulbs_on = isOn();
+      switch (event) {
+        case EVENT_ON:   msg += bulbs_on ? "already ON"  : "going to ON"; break;
+        case EVENT_OFF:  msg += bulbs_on ? "going to OFF": "already OFF"; break;
+        case EVENT_FLIP: msg += bulbs_on ? "going to OFF": "going to ON"; break;
+      }
+      System::appLogWriteLn(msg, true);
+
+      auto action_ok = false;
+      switch (event) {
+
+        case EVENT_ON:
+          if (bulbs_on)
+            action_ok = turnOff();
+          break;
+
+        case EVENT_OFF:
+          if (!bulbs_on)
+            action_ok = turnOn();
+          break;
+
+        case EVENT_FLIP:
+          action_ok = flip();
+          break;
+      }
+      if (!action_ok)
+
+        // Some bulbs did not respond
+        // Because of connection timeout, the blinking will be 1 + pause + 2
+        System::led.Blink(BLINK_DELAY, BLINK_DELAY * 2).Repeat(2);  // 2 blinks
+
+    } else {
+
+      // Button not linked
+      System::log->printf(TIMED("Button not linked to bulbs\n"));
+      System::led.Blink(BLINK_DELAY, BLINK_DELAY * 2).Repeat(2);    // 2 blinks
+    }
+  } else {
+
+    // No Wi-Fi
+    System::log->printf(TIMED("No Wi-Fi connection\n"));
+    System::led.Breathe(GLOW_DELAY).Repeat(1);            // 1 glowing
+  }
+}
+
 // Load stored configuration
 void BulbManager::load() {
 

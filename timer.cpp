@@ -11,34 +11,21 @@ using namespace ds;
 // Timer handler
 void myTimerHandler(const TimerAbsolute* timer) {
 
-  String msg("Timer \"");
-  msg += timer->getAction();
-  msg += "\" fired: bulbs are ";
-
-  const auto bulbs_on = bulb_manager.isOn();
+  String reason("Timer \"");
+  reason += timer->getAction();
+  reason += "\" fired";
 
   if (timer->getAction() == "light on") {
-    if (bulbs_on)
-      msg += "already ON";
-    else {
-      bulb_manager.turnOn();
-      msg += "going to ON";
-    }
+    bulb_manager.processEvent(BulbManager::EVENT_ON, reason);
   }
   else
   if (timer->getAction() == "light off") {
-    if (bulbs_on) {
-      bulb_manager.turnOff();
-      msg += "going to OFF";
-    } else
-      msg += "already OFF";
+    bulb_manager.processEvent(BulbManager::EVENT_OFF, reason);
   }
   else
   if (timer->getAction() == "light toggle") {
-    bulb_manager.flip();
-    msg += bulbs_on ? "going to OFF" : "going to ON";
+    bulb_manager.processEvent(BulbManager::EVENT_FLIP, reason);
   }
-  System::appLogWriteLn(msg);
 }
 
 // Install handler

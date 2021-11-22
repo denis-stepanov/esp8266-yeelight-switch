@@ -25,9 +25,12 @@ class BulbManager {
 
   public:
 
+    typedef enum Event { EVENT_FLIP, EVENT_ON, EVENT_OFF } event_t; // Possible actions
+
     BulbManager();                         // Constructor
     ~BulbManager();                        // Destructor
     void begin();                          // Start operation
+    void processEvent(event_t, const String&); // Process external event
     void load();                           // Load stored configuration
     void save();                           // Save new configuration
     uint8_t discover();                    // Discover bulbs. Returns number of known bulbs
