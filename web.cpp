@@ -49,12 +49,11 @@ static void pushFooter() {
 // Root page. Show status
 void handleRoot() {
   auto &page = System::web_page;
-  const auto nabulbs = bulb_manager.getNumActive();
 
   pushHeader("Yeelight Button");
-  if (nabulbs) {
+  if (bulb_manager.isLinked()) {
     page += "<p>Linked to the bulb";
-    if (nabulbs > 1)
+    if (bulb_manager.getNumActive() > 1)
       page += "s";
     page += ":</p><p><ul>";
     bulb_manager.printStatusHTML();
@@ -102,14 +101,15 @@ void handleSave() {
   bulb_manager.save();
 
   const auto nargs = System::web_server.args();
+  const auto linked = bulb_manager.isLinked();
   const auto nabulbs = bulb_manager.getNumActive();
-  pushHeader(String("Yeelight Button Configuration") + nabulbs || !nargs ? " Saved" : " Error", true);
+  pushHeader(String("Yeelight Button Configuration") + linked || !nargs ? " Saved" : " Error", true);
   if (nargs) {
-    if (nabulbs) {
+    if (linked) {
       page += "<p>";
       page += nabulbs;
       page += " bulb";
-      if (nabulbs != 1)
+      if (nabulbs > 1)
         page += "s";
       page += " linked</p>";
     } else
