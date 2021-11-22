@@ -50,6 +50,25 @@ static void pushFooter() {
 void handleRoot() {
   auto &page = System::web_page;
 
+  // Execute command, if any
+  if (System::web_server.args() > 0) {
+    for (unsigned int i = 0; i < (unsigned int)System::web_server.args(); i++) {
+      const String cmd = System::web_server.argName(i);
+      String reason("Web page command \"");
+      reason += cmd;
+      reason += "\" received from ";
+      reason += System::web_server.client().remoteIP().toString();
+      if (cmd == "on")
+        bulb_manager.processEvent(BulbManager::EVENT_ON, reason);
+      else if (cmd == "off")
+        bulb_manager.processEvent(BulbManager::EVENT_OFF, reason);
+      else if (cmd == "flip")
+        bulb_manager.processEvent(BulbManager::EVENT_FLIP, reason);
+      else
+        System::log->printf(TIMED("Invalid command: '%s', ignoring\n"), cmd.c_str());
+    }
+  }
+
   pushHeader("Yeelight Button");
   if (bulb_manager.isLinked()) {
     page += "<p>Linked to the bulb";
@@ -120,26 +139,11 @@ void handleSave() {
   System::sendWebPage();
 }
 
-// Bulb flip page. Accessing this page immediately flips the light
-void handleFlip() {
-  auto &page = System::web_page;
-
-  String reason("Web page flip received from ");
-  reason += System::web_server.client().remoteIP().toString();
-  bulb_manager.processEvent(BulbManager::EVENT_FLIP, reason);
-
-  pushHeader("Yeelight Button Flip", true);
-  page += bulb_manager.isLinked() ? "<p>Light flipped</p>" : "<p>No linked bulbs found</p>";
-  pushFooter();
-  System::sendWebPage();
-}
-
 // Activate web pages
 void registerPages() {
   System::web_server.on("/",     handleRoot);
   System::web_server.on("/conf", handleConf);
   System::web_server.on("/save", handleSave);
-  System::web_server.on("/flip", handleFlip);
 }
 
 // Install handler

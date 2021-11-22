@@ -76,13 +76,13 @@ void BulbManager::processEvent(event_t event, const String& reason = "") {
       switch (event) {
 
         case EVENT_ON:
-          if (bulbs_on)
-            action_ok = turnOff();
+          if (!bulbs_on)
+            action_ok = turnOn();
           break;
 
         case EVENT_OFF:
-          if (!bulbs_on)
-            action_ok = turnOn();
+          if (bulbs_on)
+            action_ok = turnOff();
           break;
 
         case EVENT_FLIP:
