@@ -70,6 +70,25 @@ void handleRoot() {
   }
 
   pushHeader("Yeelight Button");
+
+  // Icon
+  System::web_page += "<center><span style=\"font-size: 3cm;\"";
+  if (bulb_manager.isOff())
+    System::web_page +=  " class=\"off\"";
+  System::web_page += ">\xf0\x9f\x92\xa1";    // UTF-8 'ELECTRIC LIGHT BULB'
+  System::web_page += "</span><br/>";
+
+  //// Newlines are intentional, to facilitate scripting
+  System::web_page += "\nLights are ";
+  System::web_page += bulb_manager.isOn() ? "ON" : "OFF";
+  System::web_page += "\n<p>";
+
+  System::web_page += "\n<input type='button' name='on' value='   On   ' onclick='location.href=\"/?on\"'>&nbsp;&nbsp;";
+  System::web_page += "\n<input type='button' name='flip' value='Toggle' onclick='location.href=\"/?flip\"'>&nbsp;&nbsp;";
+  System::web_page += "\n<input type='button' name='off' value='   Off   ' onclick='location.href=\"/?off\"'>";
+
+  System::web_page += "\n</p></center>\n";
+
   if (bulb_manager.isLinked()) {
     page += "<p>Linked to the bulb";
     if (bulb_manager.getNumActive() > 1)
