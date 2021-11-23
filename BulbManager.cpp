@@ -306,5 +306,5 @@ void BulbManager::printConfHTML(String &page) const {
   page += "</table>\n";
 }
 
-// Define a singletone-like instance
+// Define a singleton-like instance
 BulbManager bulb_manager;           // Global bulb manager

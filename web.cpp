@@ -109,7 +109,7 @@ void handleConf() {
   page += " for Yeelight devices...</i></p>";
   page += "<p><i>Hint: turn all bulbs off, except the desired ones, in order to identify them easily.</i></p>";
 
-  // Use chunked transfer to show scan in progress. Works in Chrome, not so well in Firefox
+  // Use chunked transfer to show scan in progress
   System::web_server.setContentLength(CONTENT_LENGTH_UNKNOWN);
   System::sendWebPage();
   const auto num_bulbs = bulb_manager.discover();
