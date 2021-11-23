@@ -103,7 +103,7 @@ void handleConf() {
   auto &page = System::web_page;
 
   pushHeader("Yeelight Button Configuration");
-  page += "<p>[<a href=\"/conf\">Rescan</a>] [<a href=\"/save\">Unlink</a>] [<a href=\"..\">Back</a>]</p>";
+  page += "<p>[&nbsp;<a href=\"/conf\">rescan</a>&nbsp;] [&nbsp;<a href=\"/save\">unlink all</a>&nbsp;]</p>";
   page += "<p><i>Scanning ";
   page += System::getNetworkName();
   page += " for Yeelight devices...</i></p>";
