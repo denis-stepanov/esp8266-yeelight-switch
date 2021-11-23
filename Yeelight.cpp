@@ -30,6 +30,12 @@ static const char *YL_MSG_TOGGLE PROGMEM =
 
 /////////////////////// YBulb ///////////////////////
 
+// Return shortened bulb ID
+//// Experience shows that Yeelight IDs are long zero-padded strings, so we can save some space
+String YBulb::getShortID() const {
+  return id.substring(11);
+}
+
 // Turn the bulb on. Returns true on success
 bool YBulb::turnOn(WiFiClient& wfc) {
   return power ? true /* already on */ : flip(wfc);
@@ -52,13 +58,13 @@ bool YBulb::flip(WiFiClient& wfc) {
 }
 
 // Print bulb info in HTML
-//// Name | ID | IP Address | Model | Power
+//// Name | ID (shortened) | IP Address | Model | Power
 void YBulb::printHTML(String& str) const {
   str += "<td>";
   str += name;
   str += "</td>";
   str += "<td>";
-  str += id;
+  str += getShortID();
   str += "</td>";
   str += "<td>";
   str += ip.toString();

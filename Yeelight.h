@@ -34,6 +34,7 @@ class YBulb {
     virtual ~YBulb() {}                          // Destructor
 
     virtual const String& getID() const { return id; }   // Return bulb ID
+    virtual String getShortID() const;                   // Return shortened bulb ID
     virtual const IPAddress& getIP() const { return ip; }            // Return bulb IP-address
     virtual void setIP(const IPAddress& yip) { ip = yip; }           // Set bulb IP-address
     virtual uint16_t getPort() const { return port; }    // Return bulb port

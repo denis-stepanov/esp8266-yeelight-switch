@@ -285,21 +285,21 @@ void BulbManager::deactivateAll() {
 // Print bulbs status in HTML
 void BulbManager::printStatusHTML(String &page) const {
   page +=
-    "<table border=\"1\" cellpadding=\"3\" cellspacing=\"0\" style=\"font-family: monospace; border-collapse: collapse;\">\n"
+    "<table border=\"1\" cellpadding=\"3\" cellspacing=\"0\" style=\"font-family: monospace; border-collapse: collapse; font-size: small;\">\n"
     "<tr><th>Name</th><th>ID</th><th>IP Address</th><th>Model</th><th>Power</th></tr>\n";
   if (isLinked()) {
     for (const auto bulb : bulbs)
       if (bulb->isActive())
         bulb->printStatusHTML(page);
   } else
-    page += "<tr><td colspan=\"5\" style=\"text-align: center\">- Not linked to a bulb -</tr>\n";
+    page += "<tr><td colspan=\"5\" style=\"text-align: center\">-= Not linked to a bulb =-</tr>\n";
   page += "</table>\n";
 }
 
 // Print bulb configuration controls in HTML
 void BulbManager::printConfHTML(String &page) const {
   page +=
-    "<table border=\"1\" cellpadding=\"3\" cellspacing=\"0\" style=\"font-family: monospace; border-collapse: collapse;\">\n"
+    "<table border=\"1\" cellpadding=\"3\" cellspacing=\"0\" style=\"font-family: monospace; border-collapse: collapse; font-size: small;\">\n"
     "<tr><th>Link</th><th>Name</th><th>ID</th><th>IP Address</th><th>Model</th><th>Power</th></tr>\n";
   for (uint8_t i = 0; i < bulbs.size(); i++)
     bulbs[i]->printConfHTML(page, i);
