@@ -44,8 +44,8 @@ class BulbManager {
     uint8_t getNum() const { return bulbs.size(); }  // Return number of known bulbs
     uint8_t getNumActive() const { return nabulbs; } // Return number of active bulbs
     bool isLinked() const { return nabulbs; }        // Return true if there are linked bulbs
-    void printStatusHTML() const;          // Print bulbs status in HTML
-    void printConfHTML() const;            // Print bulb configuration controls in HTML
+    void printStatusHTML(String &) const;  // Print bulbs status in HTML
+    void printConfHTML(String &) const;    // Print bulb configuration controls in HTML
 };
 
 // Declare a singletone-like instance

@@ -52,37 +52,44 @@ bool YBulb::flip(WiFiClient& wfc) {
 }
 
 // Print bulb info in HTML
+//// Name | ID | IP Address | Model | Power
 void YBulb::printHTML(String& str) const {
-  str += F("id(");
-  str += id;
-  str += F("), ip(");
-  str += ip.toString();
-  str += F("), name(");
+  str += "<td>";
   str += name;
-  str += F("), model(");
+  str += "</td>";
+  str += "<td>";
+  str += id;
+  str += "</td>";
+  str += "<td>";
+  str += ip.toString();
+  str += "</td>";
+  str += "<td>";
   str += model;
-  str += F("), power(");
+  str += "</td>";
+  str += "<td>";
   str += getPowerStr();
-  str += F(")");
+  str += "</td>";
 }
 
 // Print bulb status in HTML
 void YBulb::printStatusHTML(String& str) const {
-  str += F("<li>");
+  str += F("<tr>");
   printHTML(str);
-  str += F("</li>\n");
+  str += F("</tr>\n");
 }
 
 // Print bulb configuration controls in HTML
+//// Same as status but prepended with a selector
 void YBulb::printConfHTML(String& str, uint8_t num) const {
+  str += F("<tr><td>");
   str += F("<input type=\"checkbox\" name=\"bulb\" value=\"");
   str += num;
   str += '"';
   if (active)
     str += F(" checked=\"checked\"");
-  str += F("/> ");
+  str += F("/></td>");
   printHTML(str);
-  str += F("<br/>\n");
+  str += F("</tr>\n");
 }
 
 
