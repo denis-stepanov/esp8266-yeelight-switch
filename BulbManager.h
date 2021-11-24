@@ -3,8 +3,8 @@
  * (c) DNS 2018-2021
  */
 
-#ifndef _BULBMANAGER_H_
-#define _BULBMANAGER_H_
+#ifndef BULBMANAGER_H
+#define BULBMANAGER_H
 
 #include <WiFiClient.h>                    // Wi-Fi communication
 #include <vector>                          // Dynamic array
@@ -14,14 +14,14 @@ class BulbManager {
 
   protected:
 
-    std::vector<YBulb *> bulbs;            // List of known bulbs
+    std::vector<dsy::YBulb *> bulbs;       // List of known bulbs
     uint8_t nabulbs;                       // Number of active bulbs
     WiFiClient client;                     // Wi-Fi client
 
     static const uint8_t EEPROM_FORMAT_VERSION = 49;  // The first version of the format stored 1 bulb id right after the marker. ID stars with ASCII '0' == 48
 
-    YBulb* find(const String&) const;      // Find a bulb by ID
-    YBulb* find(const YBulb&) const;       // Find a bulb with the same ID
+    dsy::YBulb* find(const String&) const; // Find a bulb by ID
+    dsy::YBulb* find(const dsy::YBulb&) const;        // Find a bulb with the same ID
 
   public:
 
@@ -51,4 +51,4 @@ class BulbManager {
 // Declare a singletone-like instance
 extern BulbManager bulb_manager;           // Global bulb manager
 
-#endif // _BULBMANAGER_H_
+#endif // BULBMANAGER_H

@@ -6,6 +6,8 @@
 #include "Yeelight.h"                      // Yeelight support
 #include <ESP8266WiFi.h>                   // Wi-Fi support
 
+using namespace dsy;
+
 // Yeelight protocol; see https://www.yeelight.com/en_US/developer
 
 // Some black magic to avoid defining multicast address twice

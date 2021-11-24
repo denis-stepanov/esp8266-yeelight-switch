@@ -8,6 +8,7 @@
 #include "MySystem.h"                      // System-level definitions
 
 using namespace ds;
+using namespace dsy;
 
 // Constructor
 BulbManager::BulbManager(): nabulbs(0) {
