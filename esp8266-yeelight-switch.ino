@@ -30,11 +30,6 @@ void setup() {
 
   System::begin();
   bulb_manager.begin();
-
-  // Register supported timer actions
-  System::timer_actions.push_front("light toggle");
-  System::timer_actions.push_front("light off");
-  System::timer_actions.push_front("light on");
 }
 
 // Program loop

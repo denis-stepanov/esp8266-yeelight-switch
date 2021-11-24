@@ -39,6 +39,11 @@ YBulb* BulbManager::find(const YBulb& bulb) const {
 void BulbManager::begin() {
   discover();
   load();
+
+  // Register supported timer actions
+  System::timer_actions.push_front("light toggle");
+  System::timer_actions.push_front("light off");
+  System::timer_actions.push_front("light on");
 }
 
 // Process external event
