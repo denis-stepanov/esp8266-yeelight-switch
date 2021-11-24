@@ -4,9 +4,10 @@
 #ifndef _DS_SYSTEM_H_
 
 // === User configuration
-#define DS_TIMEZONE TZ_Europe_Paris       // Timezone. Pick yours from https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h
-#define DS_LATITUDE 51.483611             // Your latitude  (needed for solar-based timers)
+#define DS_TIMEZONE  TZ_Europe_Paris      // Timezone. Pick yours from https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h
+#define DS_LATITUDE  51.483611            // Your latitude  (needed for solar-based timers)
 #define DS_LONGITUDE -0.005833            // Your longitude (needed for solar-based timers)
+#define DS_HOSTNAME  "ybutton1"           // <hostname>.local in the local network. Also, SSID of the temporary network for Wi-Fi configuration
 
 //// Different button wiring on various boards
 ////// For Witty Cloud, use board "LOLIN(WEMOS) D1 R2 & mini"
