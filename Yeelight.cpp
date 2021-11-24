@@ -60,21 +60,17 @@ bool YBulb::flip(WiFiClient& wfc) {
 // Print bulb info in HTML
 //// Name | ID (shortened) | IP Address | Model | Power
 void YBulb::printHTML(String& str) const {
-  str += "<td>";
+  str += F("<td>");
   str += name;
-  str += "</td>";
-  str += "<td>";
+  str += F("</td><td>");
   str += getShortID();
-  str += "</td>";
-  str += "<td>";
+  str += F("</td><td>");
   str += ip.toString();
-  str += "</td>";
-  str += "<td>";
+  str += F("</td><td>");
   str += model;
-  str += "</td>";
-  str += "<td>";
+  str += F("</td><td>");
   str += getPowerStr();
-  str += "</td>";
+  str += F("</td>");
 }
 
 // Print bulb status in HTML

@@ -54,9 +54,9 @@ void handleRoot() {
   if (System::web_server.args() > 0) {
     for (unsigned int i = 0; i < (unsigned int)System::web_server.args(); i++) {
       const String cmd = System::web_server.argName(i);
-      String reason("Web page command \"");
+      String reason(F("Web page command \""));
       reason += cmd;
-      reason += "\" received from ";
+      reason += F("\" received from ");
       reason += System::web_server.client().remoteIP().toString();
       if (cmd == "on")
         bulb_manager.processEvent(BulbManager::EVENT_ON, reason);
@@ -69,30 +69,30 @@ void handleRoot() {
     }
   }
 
-  pushHeader("Yeelight Button");
+  pushHeader(F("Yeelight Button"));
 
   // Icon
-  page += "<center><span style=\"font-size: 3cm;\"";
+  page += F("<center><span style=\"font-size: 3cm;\"");
   if (bulb_manager.isOff())
-    page +=  " class=\"off\"";
-  page += ">\xf0\x9f\x92\xa1";    // UTF-8 'ELECTRIC LIGHT BULB'
-  page += "</span><br/>";
+    page +=  F(" class=\"off\"");
+  page += F(">\xf0\x9f\x92\xa1");    // UTF-8 'ELECTRIC LIGHT BULB'
+  page += F("</span><br/>");
 
   //// Newlines are intentional, to facilitate scripting
-  page += "\nLights are ";
+  page += F("\nLights are ");
   page += bulb_manager.isOn() ? "ON" : "OFF";
-  page += "\n<p>";
+  page += F("\n<p>");
 
-  page += "\n<input type='button' name='on' value='   On   ' onclick='location.href=\"/?on\"'>&nbsp;&nbsp;";
-  page += "\n<input type='button' name='flip' value='Toggle' onclick='location.href=\"/?flip\"'>&nbsp;&nbsp;";
-  page += "\n<input type='button' name='off' value='   Off   ' onclick='location.href=\"/?off\"'>";
+  page += F("\n<input type='button' name='on' value='   On   ' onclick='location.href=\"/?on\"'>&nbsp;&nbsp;");
+  page += F("\n<input type='button' name='flip' value='Toggle' onclick='location.href=\"/?flip\"'>&nbsp;&nbsp;");
+  page += F("\n<input type='button' name='off' value='   Off   ' onclick='location.href=\"/?off\"'>");
 
-  page += "\n</p>\n";
+  page += F("\n</p>\n");
 
   // Table of bulbs
-  page += "Linked bulbs:<br/>\n";
+  page += F("Linked bulbs:<br/>\n");
   bulb_manager.printStatusHTML(page);
-  page += "</center>\n";
+  page += F("</center>\n");
 
   pushFooter();
   System::sendWebPage();
@@ -102,26 +102,26 @@ void handleRoot() {
 void handleConf() {
   auto &page = System::web_page;
 
-  pushHeader("Yeelight Button Configuration");
-  page += "<p>[&nbsp;<a href=\"/conf\">rescan</a>&nbsp;] [&nbsp;<a href=\"/save\">unlink all</a>&nbsp;]</p>";
-  page += "<p><i>Scanning ";
+  pushHeader(F("Yeelight Button Configuration"));
+  page += F("<p>[&nbsp;<a href=\"/conf\">rescan</a>&nbsp;] [&nbsp;<a href=\"/save\">unlink all</a>&nbsp;]</p>");
+  page += F("<p><i>Scanning ");
   page += System::getNetworkName();
-  page += " for Yeelight devices...</i></p>";
-  page += "<p><i>Hint: turn all bulbs off, except the desired ones, in order to identify them easily.</i></p>";
+  page += F(" for Yeelight devices...</i></p>");
+  page += F("<p><i>Hint: turn all bulbs off, except the desired ones, in order to identify them easily.</i></p>");
 
   // Use chunked transfer to show scan in progress
   System::web_server.setContentLength(CONTENT_LENGTH_UNKNOWN);
   System::sendWebPage();
   const auto num_bulbs = bulb_manager.discover();
-  page = "<p>Found ";
+  page = F("<p>Found ");
   page += num_bulbs;
-  page += " bulb";
+  page += F(" bulb");
   if (num_bulbs != 1)
-    page += "s";
-  page +=". Select bulbs to link from the list below.</p>";
-  page += "<form action=\"/save\"><p style=\"font-family: monospace;\">";
+    page += 's';
+  page += F(". Select bulbs to link from the list below.</p>");
+  page += F("<form action=\"/save\"><p style=\"font-family: monospace;\">");
   bulb_manager.printConfHTML(page);
-  page += "</p><p><input type=\"submit\" value=\"Link\"/></p></form>";
+  page += F("</p><p><input type=\"submit\" value=\"Link\"/></p></form>");
   pushFooter();
   System::web_server.sendContent(page);
   System::web_server.sendContent("");
@@ -137,19 +137,19 @@ void handleSave() {
   const auto nargs = System::web_server.args();
   const auto linked = bulb_manager.isLinked();
   const auto nabulbs = bulb_manager.getNumActive();
-  pushHeader(String("Yeelight Button Configuration") + linked || !nargs ? " Saved" : " Error", true);
+  pushHeader(String("Yeelight Button Configuration") + linked || !nargs ? F(" Saved") : F(" Error"), true);
   if (nargs) {
     if (linked) {
-      page += "<p>";
+      page += F("<p>");
       page += nabulbs;
-      page += " bulb";
+      page += F(" bulb");
       if (nabulbs > 1)
-        page += "s";
-      page += " linked</p>";
+        page += 's';
+      page += F(" linked</p>");
     } else
-      page += "<p>Too many bulbs passed</p>";
+      page += F("<p>Too many bulbs passed</p>");
   } else
-    page += "<p>Bulbs unlinked</p>";
+    page += F("<p>Bulbs unlinked</p>");
   pushFooter();
   System::sendWebPage();
 }
