@@ -103,11 +103,11 @@ void handleConf() {
   auto &page = System::web_page;
 
   pushHeader(F("Yeelight Button Configuration"));
-  page += F("<p>[&nbsp;<a href=\"/conf\">rescan</a>&nbsp;] [&nbsp;<a href=\"/save\">unlink all</a>&nbsp;]</p>");
+  page += F("<p>[&nbsp;<a href=\"/conf\">rescan</a>&nbsp;] [&nbsp;<a href=\"/save\">unlink all</a>&nbsp;]</p>\n");
   page += F("<p><i>Scanning ");
   page += System::getNetworkName();
-  page += F(" for Yeelight devices...</i></p>");
-  page += F("<p><i>Hint: turn all bulbs off, except the desired ones, in order to identify them easily.</i></p>");
+  page += F(" for Yeelight devices...</i></p>\n");
+  page += F("<p><i>Hint: turn all bulbs off, except the desired ones, in order to identify them easily.</i></p>\n");
 
   // Use chunked transfer to show scan in progress
   System::web_server.setContentLength(CONTENT_LENGTH_UNKNOWN);
@@ -118,10 +118,10 @@ void handleConf() {
   page += F(" bulb");
   if (num_bulbs != 1)
     page += 's';
-  page += F(". Select bulbs to link from the list below.</p>");
-  page += F("<form action=\"/save\">");
+  page += F(". Select bulbs to link from the list below.</p>\n");
+  page += F("<form action=\"/save\">\n");
   bulb_manager.printConfHTML(page);
-  page += F("<p><input type=\"submit\" value=\"Link\"/></p></form>");
+  page += F("<p><input type=\"submit\" value=\"Link\"/></p>\n</form>\n");
   pushFooter();
   System::web_server.sendContent(page);
   System::web_server.sendContent("");
