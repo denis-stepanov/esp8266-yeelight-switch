@@ -119,9 +119,9 @@ void handleConf() {
   if (num_bulbs != 1)
     page += 's';
   page += F(". Select bulbs to link from the list below.</p>");
-  page += F("<form action=\"/save\"><p style=\"font-family: monospace;\">");
+  page += F("<form action=\"/save\">");
   bulb_manager.printConfHTML(page);
-  page += F("</p><p><input type=\"submit\" value=\"Link\"/></p></form>");
+  page += F("<p><input type=\"submit\" value=\"Link\"/></p></form>");
   pushFooter();
   System::web_server.sendContent(page);
   System::web_server.sendContent("");

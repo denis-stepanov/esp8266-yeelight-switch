@@ -282,11 +282,18 @@ void BulbManager::deactivateAll() {
   nabulbs = 0;  
 }
 
+static const char *TABLE_DEF PROGMEM =
+  "<table border=\"1\" cellpadding=\"3\" cellspacing=\"0\" style=\"font-family: monospace; border-collapse: collapse; font-size: small;\">\n";
+
+static const char *TABLE_HEAD PROGMEM =
+    "<th>Name</th><th>ID</th><th>IP Address</th><th>Model</th><th>Power</th>";
+
 // Print bulbs status in HTML
 void BulbManager::printStatusHTML(String &page) const {
-  page +=
-    F("<table border=\"1\" cellpadding=\"3\" cellspacing=\"0\" style=\"font-family: monospace; border-collapse: collapse; font-size: small;\">\n"
-    "<tr><th>Name</th><th>ID</th><th>IP Address</th><th>Model</th><th>Power</th></tr>\n");
+  page += TABLE_DEF;
+  page += F("<tr>");
+  page += TABLE_HEAD;
+  page += F("</tr>\n");
   if (isLinked()) {
     for (const auto bulb : bulbs)
       if (bulb->isActive())
@@ -298,9 +305,10 @@ void BulbManager::printStatusHTML(String &page) const {
 
 // Print bulb configuration controls in HTML
 void BulbManager::printConfHTML(String &page) const {
-  page +=
-    F("<table border=\"1\" cellpadding=\"3\" cellspacing=\"0\" style=\"font-family: monospace; border-collapse: collapse; font-size: small;\">\n"
-    "<tr><th>Link</th><th>Name</th><th>ID</th><th>IP Address</th><th>Model</th><th>Power</th></tr>\n");
+  page += TABLE_DEF;
+  page += F("<tr><th>Link</th>");
+  page += TABLE_HEAD;
+  page += F("</tr>\n");
   for (uint8_t i = 0; i < bulbs.size(); i++)
     bulbs[i]->printConfHTML(page, i);
   page += F("</table>\n");
