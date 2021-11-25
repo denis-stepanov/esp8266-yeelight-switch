@@ -106,7 +106,6 @@ const uint16_t YDiscovery::SSDP_PORT = _ssdp_port;
 bool YDiscovery::send() {
   const String discovery_msg(FPSTR(YL_MSG_DISCOVER)); // Preload the message from flash, as WiFiUDP cannot work with flash directly
   t0 = millis();
-  t1 = t0;
   auto ret = true;
 
   // Send broadcast message
@@ -167,11 +166,10 @@ YBulb *YDiscovery::receive() {
 }
 
 // True if discovery process is in progress
-bool YDiscovery::isInProgress() {
+bool YDiscovery::isInProgress() const {
 
   yield();  // Discovery process is lengthy; allow for background processing
-  t1 = millis();
-  return t1 - t0 < TIMEOUT;
+  return millis() - t0 < TIMEOUT;
 }
 
 // Declare a singleton-like instance

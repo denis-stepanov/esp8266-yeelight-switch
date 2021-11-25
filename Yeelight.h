@@ -78,16 +78,15 @@ namespace dsy {
 
       WiFiUDP udp;                                 // UDP socket used for discovery process
       unsigned long t0;                            // Discovery start time
-      unsigned long t1;                            // Discovery time in progress
       char reply_buffer[SSDP_BUFFER_SIZE + 1];     // Buffer to hold one reply
 
     public:
 
-      YDiscovery(): t0(0), t1(TIMEOUT) {};         // Constructor
+      YDiscovery(): t0(ULONG_MAX) {};              // Constructor
       virtual ~YDiscovery() {}                     // Destructor
       virtual bool send();                         // Send discovery request
       virtual YBulb *receive();                    // Receive discovery reply
-      virtual bool isInProgress();                 // True if discovery process is in progress
+      virtual bool isInProgress() const;           // True if discovery process is in progress
   };
 
 } // namespace dsy
