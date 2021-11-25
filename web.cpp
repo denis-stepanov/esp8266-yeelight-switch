@@ -137,7 +137,7 @@ void handleSave() {
   const auto nargs = System::web_server.args();
   const auto linked = bulb_manager.isLinked();
   const auto nabulbs = bulb_manager.getNumActive();
-  pushHeader(String("Yeelight Button Configuration") + linked || !nargs ? F(" Saved") : F(" Error"), true);
+  pushHeader(String(F("Yeelight Button Configuration")) + linked || !nargs ? F(" Saved") : F(" Error"), true);
   if (nargs) {
     if (linked) {
       page += F("<p>");
