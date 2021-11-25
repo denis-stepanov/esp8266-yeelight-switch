@@ -173,7 +173,8 @@ YBulb *YDiscovery::receive() {
         new_bulb->setPower(line.substring(7));
     }
 
-    yield();  // Discovery process is lengthy; allow for background processing
+    if (!new_bulb)
+      yield();  // Discovery process is lengthy; allow for background processing
   }
   return new_bulb;
 }
