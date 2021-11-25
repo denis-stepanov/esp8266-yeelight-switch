@@ -153,7 +153,7 @@ void BulbManager::load() {
 //   0-1: 'YB' - Yeelight Bulb configuration marker
 //     2: format version. Increment each time the format changes
 //     3: number of stored bulbs
-//  4-22: <selected bulb ID> (19 bytes, null-terminated)
+//  4-22: <selected bulb ID> (19 characters, null-terminated)
 //      : ...
 void BulbManager::save() {
   const unsigned int nargs = System::web_server.args();
