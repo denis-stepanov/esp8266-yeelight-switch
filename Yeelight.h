@@ -67,12 +67,6 @@ namespace dsy {
   // Yeelight discovery
   class YDiscovery {
 
-    protected:
-
-      WiFiUDP udp;                                 // UDP socket used for discovery process
-      unsigned long t0;                            // Discovery start time
-      unsigned long t1;                            // Discovery time in progress
-
     public:
 
       static const IPAddress SSDP_MULTICAST_ADDR;  // Yeelight is using a flavor of SSDP protocol
@@ -80,7 +74,16 @@ namespace dsy {
       static const size_t SSDP_BUFFER_SIZE = 512;  // With contemporary bulbs, the reply is about 500 bytes
       static const unsigned long TIMEOUT = 3000;   // Discovery timeout (ms)
 
-      YDiscovery();                                // Constructor
+    protected:
+
+      WiFiUDP udp;                                 // UDP socket used for discovery process
+      unsigned long t0;                            // Discovery start time
+      unsigned long t1;                            // Discovery time in progress
+      char reply_buffer[SSDP_BUFFER_SIZE + 1];     // Buffer to hold one reply
+
+    public:
+
+      YDiscovery(): t0(0), t1(TIMEOUT) {};         // Constructor
       virtual ~YDiscovery() {}                     // Destructor
       virtual bool send();                         // Send discovery request
       virtual YBulb *receive();                    // Receive discovery reply
@@ -88,5 +91,8 @@ namespace dsy {
   };
 
 } // namespace dsy
+
+// Declare a singleton-like instance
+extern dsy::YDiscovery YDISCOVERY;                 // Global discovery handler
 
 #endif // DS_YEELIGHT_H

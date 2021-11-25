@@ -102,16 +102,12 @@ void YBulb::printConfHTML(String& str, uint8_t num) const {
 const IPAddress YDiscovery::SSDP_MULTICAST_ADDR(_ssdp_multicast_addr_comma);
 const uint16_t YDiscovery::SSDP_PORT = _ssdp_port;
 
-// Constructor
-YDiscovery::YDiscovery() {
-  t0 = millis();
-  t1 = t0;
-}
-
 // Send discovery request
 bool YDiscovery::send() {
-  auto ret = true;
   const String discovery_msg(FPSTR(YL_MSG_DISCOVER)); // Preload the message from flash, as WiFiUDP cannot work with flash directly
+  t0 = millis();
+  t1 = t0;
+  auto ret = true;
 
   // Send broadcast message
   udp.stop();
@@ -135,13 +131,10 @@ bool YDiscovery::send() {
 // Receive discovery reply
 YBulb *YDiscovery::receive() {
   YBulb *new_bulb = nullptr;
-  auto reply_buffer = new char[SSDP_BUFFER_SIZE + 1];
-  if (!reply_buffer)
-    return new_bulb;
   while (isInProgress() && !new_bulb) {
     if (!udp.parsePacket())
       continue;
-    const auto len = udp.read(reply_buffer, SSDP_BUFFER_SIZE);
+    const auto len = udp.read(reply_buffer, sizeof(reply_buffer) - 1);
     if (len <= 0)
       continue;
     reply_buffer[len] = '\0';  // Null-terminate
@@ -170,7 +163,6 @@ YBulb *YDiscovery::receive() {
         new_bulb->setPower(line.substring(7));
     }
   }
-  delete [] reply_buffer;
   return new_bulb;
 }
 
@@ -181,3 +173,6 @@ bool YDiscovery::isInProgress() {
   t1 = millis();
   return t1 - t0 < TIMEOUT;
 }
+
+// Declare a singleton-like instance
+YDiscovery YDISCOVERY;                    // Global discovery handler

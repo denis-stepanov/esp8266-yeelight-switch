@@ -205,14 +205,13 @@ void BulbManager::save() {
 // Discover bulbs. Returns number of known bulbs
 // Note - no bulb removal at the moment
 uint8_t BulbManager::discover() {
-  YDiscovery discovery;                           // Yeelight discovery
 
   // Send broadcast message
   System::log->printf(TIMED("Sending Yeelight discovery request...\n"));
-  discovery.send();
+  YDISCOVERY.send();
 
-  while (discovery.isInProgress()) {
-    const auto discovered_bulb = discovery.receive();
+  while (YDISCOVERY.isInProgress()) {
+    const auto discovered_bulb = YDISCOVERY.receive();
     if (!discovered_bulb)
       continue;
 
