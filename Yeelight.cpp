@@ -130,46 +130,52 @@ bool YDiscovery::send() {
 // Receive discovery reply
 YBulb *YDiscovery::receive() {
   YBulb *new_bulb = nullptr;
+
   while (isInProgress() && !new_bulb) {
+
     if (!udp.parsePacket())
       continue;
+
     const auto len = udp.read(reply_buffer, sizeof(reply_buffer) - 1);
     if (len <= 0)
       continue;
+
     reply_buffer[len] = '\0';  // Null-terminate
     String reply(reply_buffer);
     IPAddress host;
     uint16_t port = 0;
+
     while (true) {
+
       const auto idx = reply.indexOf(F("\r\n"));
       if (idx == -1)
         break;
+
       auto line = reply.substring(0, idx);
       reply.remove(0, idx + 2);
       if (line.startsWith(F("Location: yeelight://"))) {
         line.remove(0, line.indexOf('/') + 2);
         host.fromString(line.substring(0, line.indexOf(':')));
         port = line.substring(line.indexOf(':') + 1).toInt();
-      } else if (line.startsWith(F("id: "))) {
+      } else
+      if (line.startsWith(F("id: "))) {
         const auto id = line.substring(4);
         if (!id.isEmpty() && host && port)
           new_bulb = new YBulb(id, host, port);
-      } else if (line.startsWith(F("model: ")) && new_bulb)
+      } else
+      if (line.startsWith(F("model: ")) && new_bulb)
         new_bulb->setModel(line.substring(7));
-      else if (line.startsWith(F("name: ")) && new_bulb)
+      else
+      if (line.startsWith(F("name: ")) && new_bulb)
         new_bulb->setName(line.substring(6));  // Currently, Yeelights always seem to return an empty name here :(
-      else if (line.startsWith(F("power: ")) && new_bulb)
+      else
+      if (line.startsWith(F("power: ")) && new_bulb)
         new_bulb->setPower(line.substring(7));
     }
+
+    yield();  // Discovery process is lengthy; allow for background processing
   }
   return new_bulb;
-}
-
-// True if discovery process is in progress
-bool YDiscovery::isInProgress() const {
-
-  yield();  // Discovery process is lengthy; allow for background processing
-  return millis() - t0 < TIMEOUT;
 }
 
 // Declare a singleton-like instance

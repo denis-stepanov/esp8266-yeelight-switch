@@ -86,7 +86,7 @@ namespace dsy {
       virtual ~YDiscovery() {}                     // Destructor
       virtual bool send();                         // Send discovery request
       virtual YBulb *receive();                    // Receive discovery reply
-      virtual bool isInProgress() const;           // True if discovery process is in progress
+      virtual bool isInProgress() const { return millis() - t0 < TIMEOUT; } // True if discovery process is in progress
   };
 
 } // namespace dsy
