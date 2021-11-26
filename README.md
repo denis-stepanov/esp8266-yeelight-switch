@@ -30,11 +30,11 @@ Current known limitations:
  4. use the push button to control your bulbs manually;
  5. access to http://ybutton1.local/?flip to toggle the bulbs from a script. `/?on`, `/?off` work similarly.
 
-You will be asked to provide your time zone and geographical coordinates. This is needed to support pre-programmed actions (like turning the light on at sunset). List of supported time zones is available in the ESP8266 Core [TZ.h](https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h). The location does not have to be precise; a few kilometer precision (one decimal digit after a comma) is good enough. If you do not know your coordinates, go to [Google Maps](https://maps.google.com), right click on a location and copy a pair of numbers `latitude, longitude`.
+You will be asked to provide your time zone and geographical coordinates. This is needed to support pre-programmed actions (like turning the light on at sunset). List of supported time zones is available in the ESP8266 Core [TZ.h](https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h). The location does not have to be precise; a few kilometer precision (one decimal digit after a comma) is good enough. The coordinates are processed locally and are not being sent to any network resource. If you do not know your coordinates, go to [Google Maps](https://maps.google.com), right click on a location and copy a pair of numbers `latitude, longitude`.
 
 If you change the hostname, the password of the bootstrap Wi-Fi network will change too; you can find how it is defined in [System::getNetworkConfigPassword()](https://github.com/denis-stepanov/esp8266-yeelight-switch/blob/master/src/System.cpp).
 
-Default configuration assumes that the button is connected to `GPIO0` (`GPIO4` aka `D2` for Witty Cloud). Boards supported out of the box are Witty Cloud, NodeMCU and bare ESP-01S with a wired external button. If your button is connected to a different GPIO, define `BUTTON_BUILTIN` macro accordingly.
+Default configuration assumes that the button is connected to `GPIO0` (`GPIO4` aka `D2` for Witty Cloud) and is "pulled up" (i.e., the button's second contact is connected to GND). Boards supported out of the box are Witty Cloud, NodeMCU and bare ESP-01S with a wired external button. If your button is connected to a different GPIO, define `BUTTON_BUILTIN` macro accordingly.
  
 LED response to the button:
  * 1 blink — bulb flip OK;
@@ -44,22 +44,18 @@ LED response to the button:
  
  The LED is constantly lit during Wi-Fi reconfiguration process.
  
- Prerequsites:
+ ## Prerequisites
  1. Hardware: ESP8266. Tested with:
-    1. [ESP-12E Witty Cloud](https://www.instructables.com/Witty-Cloud-Module-Adapter-Board/), Arduino IDE board setting: "LOLIN(WEMOS) D1 R2 and mini)";
+    1. [ESP-12E Witty Cloud](https://www.instructables.com/Witty-Cloud-Module-Adapter-Board/), Arduino IDE board setting: "LOLIN(WEMOS) D1 R2 and mini";
     2. [ESP-12E NodeMCU](https://www.make-it.ca/nodemcu-details-specifications/), Arduino IDE board setting: "NodeMCU 1.0 (ESP-12E Module)";
     3. [ESP-01S](https://diyprojects.io/esp01-get-started-arduino-platformio-ide-module-choose-pinout/) with an external button, Arduino IDE board settings: "Generic ESP8266 Module"; Flash Size "1MB (FS:256KB)"; Builtin LED: 2
  2. Software:
-    1. Arduino IDE, https://www.arduino.cc/en/main/software (version tested: 1.8.13);
+    1. Arduino IDE, https://www.arduino.cc/en/main/software (version tested: 1.8.16);
     2. ESP8266 core for Arduino, https://github.com/esp8266/Arduino (version tested: 3.0.2);
     3. WiFiManager library, https://github.com/tzapu/WiFiManager (version tested: 0.16.0);
     4. JLed library, https://github.com/jandelgado/jled (version tested: 4.7.0);
     5. AceButton library, https://github.com/bxparks/AceButton (version tested: 1.9.1);
-    6. LinkedList library(*), https://github.com/ivanseidel/LinkedList (version tested: 1.3.2).
-
-(*) dependency will be removed in version 2.0.0.
- 
- If you have an ESP with an onboard button, such as a Witty Cloud Development board, or a NodeMCU, the program can be used out of the box. Otherwise you need to wire your own push button between GPIO0 and GND. If your prefer to use other GPIO, define or update its number in `MySystem.h`
+    6. Dusk2Dawn library, https://github.com/denis-stepanov/Dusk2Dawn (forked version 1.0.2 — the upstream project's last version 1.0.1 has compilation issues).
  
  ![boards](data/images/boards.png)
  
@@ -69,6 +65,7 @@ LED response to the button:
  
  Here 5V power is provided via micro-USB connector `J2` and is stepped down to 3.3V using convertor `U2`. If you happened to have a 3.3V power supply, you can omit these elements. If you do not care about diagnostic output, you can drop its port `J1` too.
  
- 26 Sep 2021:
- * version 2.0 is in prepapation, which will mostly concern refactoring and porting to [esp-ds-system](https://github.com/denis-stepanov/esp-ds-system) library;
+ ## Project Status
+ 27 Nov 2021:
+ * version 2.0 ready;
  * version 2.1 will include most wanted features (such as color / brightness control).
