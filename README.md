@@ -19,22 +19,28 @@ The program aims to offer a rather complete user experience; this is why in the 
 * "about" web page showing various run-time information about controller.
 
 Current known limitations:
-* The bulb has to be online when the switch boots, otherwise the switch will start unlinked (issue [#2](https://github.com/denis-stepanov/esp8266-yeelight-switch/issues/2));
+* A bulb has to be online when the switch boots, otherwise the switch will start unlinked (issue [#2](https://github.com/denis-stepanov/esp8266-yeelight-switch/issues/2));
 * The switch is not intended to operate on battery; see issue [#3](https://github.com/denis-stepanov/esp8266-yeelight-switch/issues/3) for more details;
 * When working with multiple bulbs, they can act discordantly (issue [#21](https://github.com/denis-stepanov/esp8266-yeelight-switch/issues/21)).
 
-Usage:
- 1. review the configuration settings at the top of the program and in MySystem.h; compile and flash your ESP8266;
- 2. boot, long press the button until the LED lights up, connect your computer to the Wi-Fi network "ybutton1", password "42ybutto", go to captive portal, enter and save your Wi-Fi network credentials;
- 3. in your Wi-Fi network, go to http://ybutton1.local, run the Yeelight scan and link the switch to the bulb found;
- 4. use the push button to control your bulb manually;
- 5. access to http://ybutton1.local/flip to toggle the bulb from a script.
+## Usage
+ 1. review the configuration settings in [MySystem.h](https://github.com/denis-stepanov/esp8266-yeelight-switch/blob/master/MySystem.h); compile and flash your ESP8266;
+ 2. boot, long press the button until the LED lights up, connect your computer to the Wi-Fi network `ybutton1`, password `42ybutto`, go to captive portal as offered (or try any site), enter and save your Wi-Fi network credentials;
+ 3. reconnect back to your Wi-Fi network, go to http://ybutton1.local, run the Yeelight scan (`config`) and link the switch to the bulbs found;
+ 4. use the push button to control your bulbs manually;
+ 5. access to http://ybutton1.local/?flip to toggle the bulbs from a script. `/?on`, `/?off` work similarly.
+
+You will be asked to provide your time zone and geographical coordinates. This is needed to support pre-programmed actions (like turning the light on at sunset). List of supported time zones is available in the ESP8266 Core [TZ.h](https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h). The location does not have to be precise; a few kilometer precision (one decimal digit after a comma) is good enough. If you do not know your coordinates, go to [Google Maps](https://maps.google.com), right click on a location and copy a pair of numbers `latitude, longitude`.
+
+If you change the hostname, the password of the bootstrap Wi-Fi network will change too; you can find how it is defined in [System::getNetworkConfigPassword()](https://github.com/denis-stepanov/esp8266-yeelight-switch/blob/master/src/System.cpp).
+
+Default configuration assumes that the button is connected to `GPIO0` (`GPIO4` aka `D2` for Witty Cloud). Boards supported out of the box are Witty Cloud, NodeMCU and bare ESP-01S with a wired external button. If your button is connected to a different GPIO, define `BUTTON_BUILTIN` macro accordingly.
  
- LED response to the button:
- * 1 blink  - bulb flip OK;
- * 1 + 2 blinks - one of the bulbs did not respond;
- * 2 blinks - button not linked to a bulb;
- * 1 long blink - Wi-Fi disconnected.
+LED response to the button:
+ * 1 blink — bulb flip OK;
+ * 1 + 2 blinks — one of the bulbs did not respond;
+ * 2 blinks — button not linked to a bulb;
+ * 1 long blink — Wi-Fi disconnected.
  
  The LED is constantly lit during Wi-Fi reconfiguration process.
  
