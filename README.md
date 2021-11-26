@@ -10,12 +10,12 @@ The program aims to offer a rather complete user experience; this is why in the 
 * Rich programmable timer capabilities, including support for sunrise / sunset;
 * Visible user feedback using the ESP8266's built-in LED;
 * Log of actions;
-* Support for Wi-Fi network reconfiguration;
+* Support for Wi-Fi network reconfiguration at run-time; no hard-coded network credentials;
 * Web interface with mDNS support to configure the switch;
 * Support for turning the bulb on or off via web interface (mobile-friendly), including a direct URL for on/off/toggle;
 * Storing of the user-selected light device in EEPROM (survives power off and file system wipe out);
-* No hardcoded or entered bulb IP addresses;
-* Detailed diagnostics sent over serial interface;
+* No hardcoded or entered bulb IP-addresses;
+* Detailed diagnostics sent over a serial interface;
 * "about" web page showing various run-time information about controller.
 
 Current known limitations:
@@ -55,7 +55,8 @@ LED response to the button:
     3. WiFiManager library, https://github.com/tzapu/WiFiManager (version tested: 0.16.0);
     4. JLed library, https://github.com/jandelgado/jled (version tested: 4.7.0);
     5. AceButton library, https://github.com/bxparks/AceButton (version tested: 1.9.1);
-    6. Dusk2Dawn library, https://github.com/denis-stepanov/Dusk2Dawn (forked version 1.0.2 — the upstream project's last version 1.0.1 has compilation issues).
+    6. Dusk2Dawn library, https://github.com/denis-stepanov/Dusk2Dawn (forked version 1.0.2 — the upstream project's last version 1.0.1 has compilation issues);
+    7. ESP-DS-System library, https://github.com/denis-stepanov/esp-ds-system (version tested: 1.1.3 — included with this project in [src/](https://github.com/denis-stepanov/esp8266-yeelight-switch/tree/master/src) folder — no need to install separately).
  
  ![boards](data/images/boards.png)
  
