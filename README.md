@@ -1,22 +1,27 @@
-# esp8266-yeelight-switch
+# ESP8266 Yeelight Switch
 Arduino project for controlling an Yeelight bulb using an ESP8266 MCU and a push button.
 
-Program features:
+## Features
+The program aims to offer a rather complete user experience; this is why in the sketch there's a lot more code than what's needed just to talk to Yeelight. Notable features include:
+
 * Use of local API, meaning nearly instantaneous light switching;
 * Support for Yeelight devices discovery on the network;
-* Support for multiple bulbs switching;
+* Support for multiple bulbs switching at once;
+* Rich programmable timer capabilities, including support for sunrise / sunset;
 * Visible user feedback using the ESP8266's built-in LED;
+* Log of actions;
 * Support for Wi-Fi network reconfiguration;
 * Web interface with mDNS support to configure the switch;
-* Support for turning the bulb on or off via web interface, including a direct URL for toggle;
+* Support for turning the bulb on or off via web interface (mobile-friendly), including a direct URL for on/off/toggle;
 * Storing of the user-selected light device in EEPROM (survives power off and file system wipe out);
 * No hardcoded or entered bulb IP addresses;
 * Detailed diagnostics sent over serial interface;
 * "about" web page showing various run-time information about controller.
 
 Current known limitations:
-* The bulb has to be online when the switch boots, otherwise the switch will start unlinked;
-* The switch is not intended to operate on battery; see issue #3 for more details.
+* The bulb has to be online when the switch boots, otherwise the switch will start unlinked (issue [#2](https://github.com/denis-stepanov/esp8266-yeelight-switch/issues/2));
+* The switch is not intended to operate on battery; see issue [#3](https://github.com/denis-stepanov/esp8266-yeelight-switch/issues/3) for more details;
+* When working with multiple bulbs, they can act discordantly (issue [#21](https://github.com/denis-stepanov/esp8266-yeelight-switch/issues/21)).
 
 Usage:
  1. review the configuration settings at the top of the program and in MySystem.h; compile and flash your ESP8266;
