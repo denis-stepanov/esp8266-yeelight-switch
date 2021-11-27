@@ -32,6 +32,17 @@ static const char *YL_MSG_TOGGLE PROGMEM =
 
 /////////////////////// YBulb ///////////////////////
 
+WiFiClient YBulb::client;       // Wi-Fi client (shared across all bulbs)
+
+// Constructor (bulb ID, bulb IP, bulb port)
+YBulb::YBulb(const String& yid, const IPAddress& yip, const uint16_t yport) :
+  id(yid), ip(yip), port(yport), power(false), active(false) {
+
+  // Reduce connection timeout for inactive bulbs
+  if (client.getTimeout() != TIMEOUT)
+    client.setTimeout(TIMEOUT);
+}
+
 // Return shortened bulb ID
 //// Experience shows that Yeelight IDs are long zero-padded strings, so we can save some space
 String YBulb::getShortID() const {
@@ -39,20 +50,20 @@ String YBulb::getShortID() const {
 }
 
 // Turn the bulb on. Returns true on success
-bool YBulb::turnOn(WiFiClient& wfc) {
-  return power ? true /* already on */ : flip(wfc);
+bool YBulb::turnOn() {
+  return power ? true /* already on */ : flip();
 }
 
 // Turn the bulb off. Returns true on success
-bool YBulb::turnOff(WiFiClient& wfc) {
-  return power ? flip(wfc) : true /* already off */;
+bool YBulb::turnOff() {
+  return power ? flip() : true /* already off */;
 }
 
 // Toggle bulb power state. Returns true on success
-bool YBulb::flip(WiFiClient& wfc) {
-  if (wfc.connect(ip, port)) {
-    wfc.print(FPSTR(YL_MSG_TOGGLE));
-    wfc.stop();
+bool YBulb::flip() {
+  if (client.connect(ip, port)) {
+    client.print(FPSTR(YL_MSG_TOGGLE));
+    client.stop();
     power = !power;
     return true;
   } else

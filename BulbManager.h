@@ -6,7 +6,6 @@
 #ifndef BULBMANAGER_H
 #define BULBMANAGER_H
 
-#include <WiFiClient.h>                    // Wi-Fi communication
 #include <vector>                          // Dynamic array
 #include "YeelightDS.h"                    // Yeelight support
 
@@ -16,7 +15,6 @@ class BulbManager {
 
     std::vector<ds::YBulb *> bulbs;        // List of known bulbs
     uint8_t nabulbs;                       // Number of active bulbs
-    WiFiClient client;                     // Wi-Fi client
 
     static const uint8_t EEPROM_FORMAT_VERSION = 49;  // The first version of the format stored 1 bulb id right after the marker. ID stars with ASCII '0' == 48
 
@@ -27,7 +25,7 @@ class BulbManager {
 
     typedef enum Event { EVENT_FLIP, EVENT_ON, EVENT_OFF } event_t; // Possible actions
 
-    BulbManager();                         // Constructor
+    BulbManager() : nabulbs(0) {}          // Constructor
     ~BulbManager();                        // Destructor
     void begin();                          // Start operation
     void processEvent(event_t, const String&); // Process external event

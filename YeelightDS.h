@@ -16,6 +16,8 @@ namespace ds {
 
     protected:
 
+      static WiFiClient client;                    // Wi-Fi client (shared across all bulbs)
+
       String id;                                   // Yeelight device ID
       IPAddress ip;                                // IP-address of the bulb
       uint16_t port;                               // Port of the bulb
@@ -31,8 +33,7 @@ namespace ds {
       static const size_t ID_LENGTH = 18;          // Length of the Yeelight device ID (chars)
       static const uint16_t TIMEOUT = 1000;        // Bulb connection timeout (ms)
 
-      YBulb(const String& yid, const IPAddress& yip = 0, const uint16_t yport = 55443) :
-        id(yid), ip(yip), port(yport), power(false), active(false) {}  // Constructor
+      YBulb(const String&, const IPAddress& yip = 0, const uint16_t yport = 55443); // Constructor (bulb ID, bulb IP, bulb port)
       virtual ~YBulb() {}                          // Destructor
 
       virtual const String& getID() const { return id; }   // Return bulb ID
@@ -51,9 +52,9 @@ namespace ds {
       virtual bool isActive() const { return active; }     // True if bulb control is active
       virtual void activate() { active = true; }           // Activate bulb control
       virtual void deactivate() { active = false; }        // Deactivate bulb control
-      virtual bool turnOn(WiFiClient&);                    // Turn the bulb on. Returns true on success
-      virtual bool turnOff(WiFiClient&);                   // Turn the bulb off. Returns true on success
-      virtual bool flip(WiFiClient&);                      // Toggle bulb power state. Returns true on success
+      virtual bool turnOn();                               // Turn the bulb on. Returns true on success
+      virtual bool turnOff();                              // Turn the bulb off. Returns true on success
+      virtual bool flip();                                 // Toggle bulb power state. Returns true on success
       virtual void printStatusHTML(String&) const;         // Print bulb status in HTML
       virtual void printConfHTML(String&, uint8_t) const;  // Print bulb configuration controls in HTML
       virtual bool operator==(const String& id2) const {   // Bulb comparison

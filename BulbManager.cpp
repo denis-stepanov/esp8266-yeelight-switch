@@ -9,13 +9,6 @@
 
 using namespace ds;
 
-// Constructor
-BulbManager::BulbManager(): nabulbs(0) {
-  
-  // Reduce connection timeout for inactive bulbs
-  client.setTimeout(YBulb::TIMEOUT);
-}
-
 // Destructor
 BulbManager::~BulbManager() {
   for (auto bulb : bulbs)
@@ -246,7 +239,7 @@ bool BulbManager::flip() {
   if (isLinked()) {
     for (const auto bulb : bulbs) {
       if (bulb->isActive()) {
-        if (bulb->flip(client))
+        if (bulb->flip())
           System::log->printf(TIMED("Bulb %s toggle sent\n"), bulb->getID().c_str());
         else {
           System::log->printf(TIMED("Bulb connection to %s failed\n"), bulb->getIP().toString().c_str());
