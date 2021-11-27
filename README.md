@@ -66,7 +66,7 @@ The LED is constantly lit during Wi-Fi reconfiguration process.
    1. Arduino IDE, https://www.arduino.cc/en/main/software (version tested: 1.8.16);
    2. ESP8266 core for Arduino, https://github.com/esp8266/Arduino (version tested: 3.0.2);
    3. WiFiManager library, https://github.com/tzapu/WiFiManager (version tested: 0.16.0);
-   4. JLed library, https://github.com/jandelgado/jled (version tested: 4.7.0);
+   4. JLed library, https://github.com/jandelgado/jled (version tested: 4.8.0);
    5. AceButton library, https://github.com/bxparks/AceButton (version tested: 1.9.1);
    6. Dusk2Dawn library, https://github.com/denis-stepanov/Dusk2Dawn (forked version 1.0.2 — the upstream project's last version 1.0.1 has compilation issues);
    7. ESP-DS-System library, https://github.com/denis-stepanov/esp-ds-system (version tested: 1.1.3 — included with this project in [src/](https://github.com/denis-stepanov/esp8266-yeelight-switch/tree/master/src) folder — no need to install separately).
