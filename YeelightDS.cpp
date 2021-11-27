@@ -1,12 +1,12 @@
 /* Yeelight Smart Switch App for ESP8266
- * Yeelight bulb implementation
+ * Yeelight communication library definition
  * (c) DNS 2018-2021
  */
 
-#include "Yeelight.h"                      // Yeelight support
+#include "YeelightDS.h"                    // Yeelight support
 #include <ESP8266WiFi.h>                   // Wi-Fi support
 
-using namespace dsy;
+using namespace ds;
 
 // Yeelight protocol; see https://www.yeelight.com/en_US/developer
 

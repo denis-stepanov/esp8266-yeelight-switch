@@ -1,15 +1,15 @@
 /* Yeelight Smart Switch App for ESP8266
- * Yeelight bulb definitions
+ * Yeelight communication library definition
  * (c) DNS 2018-2021
  */
 
-#ifndef DS_YEELIGHT_H
-#define DS_YEELIGHT_H
+#ifndef YEELIGHTDS_H
+#define YEELIGHTDS_H
 
 #include <WiFiClient.h>           // Wi-Fi support
 #include <WiFiUdp.h>              // UDP support
 
-namespace dsy {
+namespace ds {
 
   // Yeelight bulb object
   class YBulb {
@@ -89,9 +89,9 @@ namespace dsy {
       virtual bool isInProgress() const { return millis() - t0 < TIMEOUT; } // True if discovery process is in progress
   };
 
-} // namespace dsy
+} // namespace ds
 
 // Declare a singleton-like instance
-extern dsy::YDiscovery YDISCOVERY;                 // Global discovery handler
+extern ds::YDiscovery YDISCOVERY;                  // Global discovery handler
 
-#endif // DS_YEELIGHT_H
+#endif // YEELIGHTDS_H

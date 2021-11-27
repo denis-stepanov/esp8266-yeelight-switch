@@ -8,20 +8,20 @@
 
 #include <WiFiClient.h>                    // Wi-Fi communication
 #include <vector>                          // Dynamic array
-#include "Yeelight.h"                      // Yeelight support
+#include "YeelightDS.h"                    // Yeelight support
 
 class BulbManager {
 
   protected:
 
-    std::vector<dsy::YBulb *> bulbs;       // List of known bulbs
+    std::vector<ds::YBulb *> bulbs;        // List of known bulbs
     uint8_t nabulbs;                       // Number of active bulbs
     WiFiClient client;                     // Wi-Fi client
 
     static const uint8_t EEPROM_FORMAT_VERSION = 49;  // The first version of the format stored 1 bulb id right after the marker. ID stars with ASCII '0' == 48
 
-    dsy::YBulb* find(const String&) const; // Find a bulb by ID
-    dsy::YBulb* find(const dsy::YBulb&) const;        // Find a bulb with the same ID
+    ds::YBulb* find(const String&) const;  // Find a bulb by ID
+    ds::YBulb* find(const ds::YBulb&) const;          // Find a bulb with the same ID
 
   public:
 
