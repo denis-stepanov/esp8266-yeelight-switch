@@ -25,22 +25,22 @@ Current known limitations:
 
 ## Usage
 1. Review the configuration settings in [MySystem.h](https://github.com/denis-stepanov/esp8266-yeelight-switch/blob/master/MySystem.h); compile and flash your ESP8266;
-2. Boot, long press the button until the LED lights up, connect your computer to the Wi-Fi network `ybutton1`, password `42ybutto`, go to captive portal as offered (or try any site), enter and save your Wi-Fi network credentials;
+2. Boot, long press the button until the LED lights up, connect your computer to the Wi-Fi network `ybutton1`, password `42ybutto`, go to the captive portal as offered (or try any site), enter and save your Wi-Fi network credentials;
 3. Reconnect back to your Wi-Fi network, go to http://ybutton1.local, run the Yeelight scan (`config`) and link the switch to the bulbs found;
 4. Use the push button to control your bulbs manually;
 5. Access to http://ybutton1.local/?flip to toggle the bulbs from a script. `/?on`, `/?off` work similarly.
 
-In the settings you will need to provide your time zone and geographical coordinates. This is needed to support pre-programmed actions (like turning the light on at sunset). List of supported time zones is available in the ESP8266 Core [TZ.h](https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h). The location does not have to be precise; a few kilometer precision (one decimal digit after a comma) is good enough. The coordinates are processed locally and are not being sent to any network resource. If you do not know your coordinates, go to [Google Maps](https://maps.google.com), right click on a location and copy a pair of numbers `latitude, longitude`.
+In the settings you will need to provide your time zone and geographical coordinates. This is needed to support pre-programmed actions (like turning the light on at sunset or at a given hour). List of supported time zones is available in the ESP8266 Core's [TZ.h](https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h). The location does not have to be precise; a few kilometer precision (one decimal digit after a comma) is good enough. The coordinates are processed locally and are not being sent to any network resource. If you do not know your coordinates, go to [Google Maps](https://maps.google.com), right click on a location and copy a pair of numbers `latitude, longitude`.
 
 If you change the hostname, the password of the bootstrap Wi-Fi network will change too; you can find how it is defined in [System::getNetworkConfigPassword()](https://github.com/denis-stepanov/esp8266-yeelight-switch/blob/master/src/System.cpp).
 
-Default configuration assumes that the button is connected to `GPIO0` (`GPIO4` aka `D2` for Witty Cloud) and is "pulled up" (i.e., the button's second contact is connected to GND). Boards supported out of the box are Witty Cloud, NodeMCU and bare ESP-01S with a wired external button. If your button is connected to a different GPIO, define `BUTTON_BUILTIN` macro accordingly.
- 
+N.B.: Android does not support mDNS (`*.local` addresses), so from Android Chrome you would need to use an IP-address of the controller instead of `ybutton1.local`. The easiest way to find out the IP-address is to read the boot log using Arduino Serial Monitor.
+
 LED response to the button:
- * 1 blink — bulb flip OK;
- * 1 + 2 blinks — one of the bulbs did not respond;
- * 2 blinks — button not linked to a bulb;
- * 1 long blink — Wi-Fi disconnected.
+* 1 blink — bulb flip OK;
+* 1 + 2 blinks — one of the bulbs did not respond;
+* 2 blinks — button not linked to a bulb;
+* 1 long blink — Wi-Fi disconnected.
  
 The LED is constantly lit during Wi-Fi reconfiguration process.
  
@@ -72,12 +72,14 @@ The LED is constantly lit during Wi-Fi reconfiguration process.
    7. ESP-DS-System library, https://github.com/denis-stepanov/esp-ds-system (version tested: 1.1.3 — included with this project in [src/](https://github.com/denis-stepanov/esp8266-yeelight-switch/tree/master/src) folder — no need to install separately).
  
 ![boards](data/images/boards.png)
- 
-Example of connections for an ESP-01S board shown above:
+
+Default configuration assumes that the button is connected to `GPIO0` (`GPIO4` aka `D2` for Witty Cloud) and is "pulled up" (i.e., the button's other contact is connected to GND). Boards supported out of the box are Witty Cloud, NodeMCU and bare ESP-01S with a wired external button. If your button is connected to a different GPIO, define `BUTTON_BUILTIN` macro in `MySystem.h` accordingly.
+
+Example of connections for the ESP-01S board shown above:
  
 ![esp-01s schematic](data/images/schematic-esp-01s.png)
  
-Here 5V power is provided via micro-USB connector `J2` and is stepped down to 3.3V using convertor `U2`. If you happened to have a 3.3V power supply, you can omit these elements. If you do not care about diagnostic output, you can drop its port `J1` too.
+Here 5V power is provided via micro-USB connector `J2` and is stepped down to 3.3V using voltage converter `U2`. If you happened to have a 3.3V power supply, you can omit these elements. If you do not care about diagnostic output, you can drop its port `J1` too.
  
 ## Project Status
 27 Nov 2021:
