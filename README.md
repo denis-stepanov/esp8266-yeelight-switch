@@ -80,7 +80,41 @@ Example of connections for the ESP-01S board shown above:
 ![esp-01s schematic](data/images/schematic-esp-01s.png)
  
 Here 5V power is provided via micro-USB connector `J2` and is stepped down to 3.3V using voltage converter `U2`. If you happened to have a 3.3V power supply, you can omit these elements. If you do not care about diagnostic output, you can drop its port `J1` too.
- 
+
+## Making Your Own Sketch
+Yeelight communication logic is isolated in two files `YeelightDS.h`, `YeelightDS.cpp`, which have no other dependencies. If you want to make your own sketch, you can copy these two files into a folder where your `.ino` is located. See the [header](https://github.com/denis-stepanov/esp8266-yeelight-switch/blob/master/YeelightDS.h) for description of methods available. A simple "blink" sketch could look like this:
+
+```
+#include <ESP8266WiFi.h>
+#include "YeelightDS.h"
+
+using namespace ds;
+
+YBulb *bulb = nullptr;
+
+void setup() {
+
+  // Connect to network
+  WiFi.begin(/* wifi_ssid, wifi_pass */);
+  while (!WiFi.isConnected()) delay(1000);
+
+  // Run bulb discovery; get the first bulb found
+  YDISCOVERY.send();
+  bulb = YDISCOVERY.receive();
+}
+
+void loop() {
+
+  // Flip state every 5 sec
+  if (bulb)
+    bulb->flip();
+
+  delay(5000);
+}
+```
+
+It will run Yeelight discovery and turn on / off the first found bulb every 5 seconds.
+
 ## Project Status
 27 Nov 2021:
 * version 2.0 ready;
