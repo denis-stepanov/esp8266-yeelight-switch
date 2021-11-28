@@ -56,7 +56,40 @@ The LED is constantly lit during Wi-Fi reconfiguration process.
 * Action log, showing bulb manipulations via a button, web page or timer event:
  
 ![log](data/images/screenshot-log.jpg)
- 
+
+## Scripting (Linux)
+* Flip the lights with `curl`:
+```
+$ curl -s ybutton1.local/?flip | grep Lights
+Lights are ON
+$
+```
+
+* Flip the lights with `wget`:
+```
+$ wget -qO - ybutton1.local/?flip | grep Lights
+Lights are ON
+$
+```
+
+* Flip the lights with pure `bash`:
+```
+$ ./flip.sh
+Lights are ON
+$ cat flip.sh
+#!/bin/bash
+
+exec {ybutton}<>/dev/tcp/ybutton1.local/80
+echo -e "GET /?flip HTTP/1.0\r\n\r\n" >&$ybutton
+while read -u $ybutton
+do
+  [[ $REPLY == Lights* ]] && echo $REPLY && break
+done
+exec {ybutton}>&-
+$
+```
+Support for mDNS (`*.local` addresses) is usually enabled by default; if it is not the case, check your Linux distro docs on how to enable it.
+
 ## Prerequisites
 1. Hardware: ESP8266. Tested with:
    1. [ESP-12E Witty Cloud](https://www.instructables.com/Witty-Cloud-Module-Adapter-Board/), Arduino IDE board setting: "LOLIN(WEMOS) D1 R2 and mini";
