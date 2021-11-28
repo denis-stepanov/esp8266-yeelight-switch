@@ -33,6 +33,7 @@ static const char *YL_MSG_TOGGLE PROGMEM =
 /////////////////////// YBulb ///////////////////////
 
 WiFiClient YBulb::client;       // Wi-Fi client (shared across all bulbs)
+const char *YBulb::ID_UNKNOWN PROGMEM = "0x000000000UNKNOWN";  // Unknown ID literal
 
 // Constructor (bulb ID, bulb IP, bulb port)
 YBulb::YBulb(const String& yid, const IPAddress& yip, const uint16_t yport) :

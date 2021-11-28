@@ -31,12 +31,14 @@ namespace ds {
     public:
 
       static const size_t ID_LENGTH = 18;          // Length of the Yeelight device ID (chars)
+      static const char *ID_UNKNOWN;               // Unknown ID literal
       static const uint16_t TIMEOUT = 1000;        // Bulb connection timeout (ms)
 
-      YBulb(const String&, const IPAddress& yip = 0, const uint16_t yport = 55443); // Constructor (bulb ID, bulb IP, bulb port)
+      YBulb(const String& yid = ID_UNKNOWN, const IPAddress& yip = 0, const uint16_t yport = 55443); // Constructor (bulb ID, bulb IP, bulb port)
       virtual ~YBulb() {}                          // Destructor
 
       virtual const String& getID() const { return id; }   // Return bulb ID
+      virtual void setID(const String& yid) { id = yid; }  // Set bulb ID
       virtual String getShortID() const;                   // Return shortened bulb ID
       virtual const IPAddress& getIP() const { return ip; }            // Return bulb IP-address
       virtual void setIP(const IPAddress& yip) { ip = yip; }           // Set bulb IP-address
