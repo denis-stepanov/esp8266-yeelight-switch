@@ -30,12 +30,10 @@ Current known limitations:
 4. Use the push button to control your bulbs manually;
 5. Access to http://ybutton1.local/?flip to toggle the bulbs from a script. `/?on`, `/?off` work similarly.
 
-In the settings you will need to provide your time zone and geographical coordinates. This is needed to support pre-programmed actions (like turning the light on at sunset or at a given hour). List of supported time zones is available in the ESP8266 Core's [TZ.h](https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h). The location does not have to be precise; a few kilometer precision (one decimal digit after a comma) is good enough. The coordinates are processed locally and are not being sent to any network resource. If you do not know your coordinates, go to [Google Maps](https://maps.google.com), right click on a location and copy a pair of numbers `latitude, longitude`.
+In the settings you will need to provide your time zone and geographical coordinates. This is needed to support pre-programmed actions (like turning the light on at sunset or at a given hour). The list of supported time zones is available in the ESP8266 Core's [TZ.h](https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h). The location does not have to be precise; a few kilometer precision (one decimal digit after a comma) is good enough. The coordinates are processed locally in ESP8266 controller and are not being sent to any network resource. If you do not know your coordinates, go to [Google Maps](https://maps.google.com), right click on a location and copy a pair of numbers `latitude, longitude`.
 
 If you change the hostname, the password of the bootstrap Wi-Fi network will change too; you can find how it is defined in [System::getNetworkConfigPassword()](https://github.com/denis-stepanov/esp8266-yeelight-switch/blob/master/src/System.cpp).
-
-N.B.: Android does not support mDNS (`*.local` addresses), so from Android Chrome you would need to use an IP-address of the controller instead of `ybutton1.local`. The easiest way to find out the IP-address is to read the boot log using Arduino Serial Monitor.
-
+in
 LED response to the button:
 * 1 blink — bulb flip OK;
 * 1 + 2 blinks — one of the bulbs did not respond;
@@ -106,7 +104,7 @@ Support for mDNS (`*.local` addresses) is usually enabled by default; if it is n
  
 ![boards](data/images/boards.png)
 
-Default configuration assumes that the button is connected to `GPIO0` (`GPIO4` aka `D2` for Witty Cloud) and is "pulled up" (i.e., the button's other contact is connected to GND). Boards supported out of the box are Witty Cloud, NodeMCU and bare ESP-01S with a wired external button. If your button is connected to a different GPIO, define `BUTTON_BUILTIN` macro in `MySystem.h` accordingly.
+Default configuration assumes that the button is connected to `GPIO0` (`GPIO4` aka `D2` for Witty Cloud) and is "pulled up" (i.e., the button's other contact is connected to GND). Boards supported out of the box are Witty Cloud, NodeMCU and a bare ESP-01S with a wired external button. If your button is connected to a different GPIO, define `BUTTON_BUILTIN` macro in `MySystem.h` accordingly.
 
 Example of connections for the ESP-01S board shown above:
  
